@@ -1,0 +1,141 @@
+#!/bin/bash
+## Tune cpu.patch to local hw
+## Req: grep, gcc, sed, lscpu, hash, sha512sum,
+##                    /proc/cpuinfo, cpu.patch
+## Use: ./localcpu
+## Author Andrew S.
+## Licence GPL
+## Tested on Arch Linux and Linux Kernel source 4.14.3
+## https://github.com/quarkscript/linux-kernel-cpu-patch.git
+
+if [ ! -e "cpu.patch" ]
+    then
+    echo -------------------
+    echo cpu.patch not found
+    echo nothing to tune
+    echo -------------------
+elif ! (hash gcc 2>/dev/null)
+    then
+    echo -------------------
+    echo gcc not found, exit
+    echo -------------------
+elif [ -e "localcpu.patch" ]
+    then
+    echo ---------------------------
+    echo localcpu.patch is present
+    echo Tunning will not run
+    echo 
+    echo to gen a new localcpu.patch
+    echo you must remove existing
+    echo ---------------------------
+else
+    cp cpu.patch localcpu.patch
+    LANG=C gcc -march=native -v -Q --help=target >/tmp/hw_test.txt
+    echo
+    grep enabled /tmp/hw_test.txt > /tmp/capabilities.txt
+    for i in core2 nehalem westmere silvermont sandybridge ivybridge haswell broadwell skylake k8-sse3 amdfam10 barcelona btver1 bdver1 bdver2 bdver3 btver2
+        do
+            if (grep $i /tmp/hw_test.txt -q) 
+                then
+                enabl+="-march=$i -mtune=$i "
+                call_cc+="$""(call cc-option,-march="$i",$""(call cc-option,-mtune="$i")"
+                arrch=$i
+        fi  
+    done
+    for i in maes mclflushopt mcrc32 mcx16 mfsgsbase mfxsr mlwp mlzcnt mmovbe mpclmul msahf msha mtbm mxsave mxsavec mxsaveopt mxsaves mxop mfma
+        do
+            if (grep $i /tmp/capabilities.txt -q) 
+                then
+                enabl+="-$i "
+                call_cc+=",$""(call cc-option,-$i)"
+            fi
+    done
+    if (grep mavx /tmp/capabilities.txt -q) 
+        then
+        enabl+="-mavx "
+        call_cc+=",$""(call cc-option,-mavx)"
+        if (grep mavx2 /tmp/capabilities.txt -q) 
+            then
+            enabl+="-mavx2 "
+            call_cc+=",$""(call cc-option,-mavx2)"
+        fi
+    elif (grep msse2 /tmp/capabilities.txt -q) 
+        then
+        enabl+="-msse2 "
+        call_cc+=",$""(call cc-option,-msse2)"
+        for i in msse3 mssse3 msse4.1 msse4.a msse4.2
+            do
+                if (grep $i /tmp/capabilities.txt -q) 
+                    then
+                    enabl+="-$i "
+                    call_cc+=",$""(call cc-option,-$i)"
+                fi  
+         done
+    fi
+    if ! (hash lscpu 2>/dev/null)
+        then
+        echo
+        echo lscpu is not found
+        echo L1d and L2 cache sizes ignored
+        echo
+    else
+        l1=$(LANG=C lscpu | grep L1d | sed -e 's/L1d.cache:.//' | sed -e 's/ //g' | sed -e 's/K//g')
+        l2=$(LANG=C lscpu | grep L2 | sed -e 's/L2.cache:.//' | sed -e 's/ //g' | sed -e 's/K//g')
+        enabl+="--param l1-cache-size=$l1 "
+        call_cc+=",$""(call cc-option,--param l1-cache-size=$l1)"
+        enabl+="--param l2-cache-size=$l2 "
+        call_cc+=",$""(call cc-option,--param l2-cache-size=$l2)"
+    fi
+    if [ ! -e "/proc/cpuinfo" ]
+        then
+        echo
+        echo /proc/cpuinfo not found
+        echo L1 cache alignment ignored
+        echo
+    else
+        c_line=$(grep cache_alignment /proc/cpuinfo -m 1 | sed -e 's/cache_alignment.:.//g')
+        enabl+="--param l1-cache-line-size=$c_line "
+        call_cc+=",$""(call cc-option,--param l1-cache-line-size=$c_line)"
+    fi
+    call_cc+=")"
+    if [ -z $arrch ]
+        then
+        echo -----------------------------------------------------
+        echo CPU type is undetected, tuning of cpu.patch
+        echo is not possible for now. It is better to use native
+        echo or generic optimizations '('do not forget to patch
+        echo kernel source with original cpu.patch')'
+        echo -----------------------------------------------------
+        rm -f localcpu.patch
+    else
+        p_t='Enables -march='$arrch
+        l_n=$(grep -n "$p_t" localcpu.patch | sed -e 's/:.*//g')
+        head -n $(($l_n-1)) localcpu.patch >patch.patch
+        echo "+	  Enables "$enabl>>patch.patch
+        tail -n +$(($l_n+1)) localcpu.patch >>patch.patch
+        rm -f localcpu.patch
+        cp -f patch.patch localcpu.patch
+        rm -f patch.patch
+        p_t='$(call cc-option,-march='$arrch',$(call cc-option,-mtune='$arrch'))'
+        l_n=$(grep -n "$p_t" localcpu.patch | sed -e 's/:.*//g')
+        head -n $(($l_n-1)) localcpu.patch >patch.patch
+        echo "+        "$call_cc>>patch.patch
+        tail -n +$(($l_n+1)) localcpu.patch >>patch.patch
+        rm -f localcpu.patch
+        cp -f patch.patch localcpu.patch
+        rm -f patch.patch
+        echo -----------------------------------------------------
+        echo Linux kernel can be better optimized to 
+        echo CPU $(grep 'model name' /proc/cpuinfo --max-count=1)
+        echo just patch kernel source with localcpu.patch and
+        echo select '"'$arrch'"' CPU-family while configuring it
+        echo -----------------------------------------------------
+    fi
+    if [ ! "$(sha512sum cpu.patch | sed -e 's/  cpu.patch//')" == "72e367fb955b203bbe35c870c4760a651fd79fa51a982b9f9c595bc5c6b2c41f34ba36f9a022ef17fc44550b4ccdd2046af46f1fd3e944592fdcae32157546a7" ]
+        then
+        echo cpu.patch is differ from the original cpu.patch
+        echo Wrong source can leads to fails. Be aware
+        echo 
+    fi
+    rm -f /tmp/hw_test.txt /tmp/capabilities.txt 
+fi
