@@ -6,7 +6,7 @@
 ## Author Andrew S.
 ## Licence GPL
 ## Tested on Arch Linux and Linux Kernel source 4.14.3
-## https://github.com/quarkscript/linux-kernel-cpu-patch.git
+## https://github.com/quarkscript/linux-kernel-cpu-patch
 
 if [ ! -e "cpu.patch" ]
     then
