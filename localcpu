@@ -54,7 +54,7 @@ else
         then
         enabl+="-mavx "
         call_cc+=",$""(call cc-option,-mavx)"
-        if (grep mavx2 /tmp/capabilities.txt -q) 
+        if (grep "mavx2 " /tmp/capabilities.txt -q) 
             then
             enabl+="-mavx2 "
             call_cc+=",$""(call cc-option,-mavx2)"
