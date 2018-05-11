@@ -101,7 +101,7 @@ else
         echo select '"'$arrch'"' CPU-family while configuring it
         echo -----------------------------------------------------
     fi
-    if [ ! "$(sha512sum cpu.patch | sed -e 's/  cpu.patch//')" == "72e367fb955b203bbe35c870c4760a651fd79fa51a982b9f9c595bc5c6b2c41f34ba36f9a022ef17fc44550b4ccdd2046af46f1fd3e944592fdcae32157546a7" ]
+    if [ ! "$(sha512sum cpu.patch | sed -e 's/  cpu.patch//')" == "3a034d8d86568d59ac6f5e1e681f3af084e6a444b311d5117293924d43af643f2061c5662699a1f0cd925d85295d76daf0a1ed5225d8b9761959d5de06e48d4c" ]
         then
         echo cpu.patch is differ from the original cpu.patch
         echo Wrong source can leads to fails. Be aware
