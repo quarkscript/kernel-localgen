@@ -1,7 +1,7 @@
 diff -Naur a/arch/x86/include/asm/module.h b/arch/x86/include/asm/module.h
---- a/arch/x86/include/asm/module.h	2017-10-05 10:47:47.000000000 +0300
-+++ b/arch/x86/include/asm/module.h	2017-10-06 22:36:47.055072383 +0300
-@@ -15,6 +15,24 @@
+--- a/arch/x86/include/asm/module.h	2019-02-23 10:08:07.000000000 +0200
++++ b/arch/x86/include/asm/module.h	2019-02-24 21:02:57.056508991 +0200
+@@ -25,6 +25,24 @@
  #define MODULE_PROC_FAMILY "586MMX "
  #elif defined CONFIG_MCORE2
  #define MODULE_PROC_FAMILY "CORE2 "
@@ -26,7 +26,7 @@ diff -Naur a/arch/x86/include/asm/module.h b/arch/x86/include/asm/module.h
  #elif defined CONFIG_MATOM
  #define MODULE_PROC_FAMILY "ATOM "
  #elif defined CONFIG_M686
-@@ -33,6 +51,22 @@
+@@ -43,6 +61,22 @@
  #define MODULE_PROC_FAMILY "K7 "
  #elif defined CONFIG_MK8
  #define MODULE_PROC_FAMILY "K8 "
@@ -50,9 +50,9 @@ diff -Naur a/arch/x86/include/asm/module.h b/arch/x86/include/asm/module.h
  #define MODULE_PROC_FAMILY "ELAN "
  #elif defined CONFIG_MCRUSOE
 diff -Naur a/arch/x86/Kconfig.cpu b/arch/x86/Kconfig.cpu
---- a/arch/x86/Kconfig.cpu	2017-10-05 10:47:47.000000000 +0300
-+++ b/arch/x86/Kconfig.cpu	2017-10-07 00:24:13.954840468 +0300
-@@ -45,6 +45,7 @@
+--- a/arch/x86/Kconfig.cpu	2019-02-23 10:08:07.000000000 +0200
++++ b/arch/x86/Kconfig.cpu	2019-02-24 21:02:57.056508991 +0200
+@@ -46,6 +46,7 @@
  	  - "Core 2/newer Xeon" for all core2 and newer Intel CPUs.
  	  - "Intel Atom" for the Atom-microarchitecture CPUs.
  	  - "Generic-x86-64" for a kernel which runs on any x86-64 CPU.
@@ -60,7 +60,7 @@ diff -Naur a/arch/x86/Kconfig.cpu b/arch/x86/Kconfig.cpu
  
  	  See each option's help text for additional details. If you don't know
  	  what to do, choose "486".
-@@ -147,9 +148,8 @@
+@@ -148,9 +149,8 @@
  		-Paxville
  		-Dempsey
  
@@ -71,7 +71,7 @@ diff -Naur a/arch/x86/Kconfig.cpu b/arch/x86/Kconfig.cpu
  	depends on X86_32
  	---help---
  	  Select this for an AMD K6-family processor.  Enables use of
-@@ -157,7 +157,7 @@
+@@ -158,7 +158,7 @@
  	  flags to GCC.
  
  config MK7
@@ -80,7 +80,7 @@ diff -Naur a/arch/x86/Kconfig.cpu b/arch/x86/Kconfig.cpu
  	depends on X86_32
  	---help---
  	  Select this for an AMD Athlon K7-family processor.  Enables use of
-@@ -165,12 +165,69 @@
+@@ -166,12 +166,69 @@
  	  flags to GCC.
  
  config MK8
@@ -151,7 +151,7 @@ diff -Naur a/arch/x86/Kconfig.cpu b/arch/x86/Kconfig.cpu
  config MCRUSOE
  	bool "Crusoe"
  	depends on X86_32
-@@ -261,8 +318,17 @@
+@@ -262,8 +319,17 @@
  	  using the cpu family field
  	  in /proc/cpuinfo. Family 15 is an older Xeon, Family 6 a newer one.
  
@@ -170,7 +170,7 @@ diff -Naur a/arch/x86/Kconfig.cpu b/arch/x86/Kconfig.cpu
  	---help---
  
  	  Select this for Intel Core 2 and newer Core 2 Xeons (Xeon 51xx and
-@@ -270,14 +336,71 @@
+@@ -271,14 +337,71 @@
  	  family in /proc/cpuinfo. Newer ones have 6 and older ones 15
  	  (not a typo)
  
@@ -248,7 +248,7 @@ diff -Naur a/arch/x86/Kconfig.cpu b/arch/x86/Kconfig.cpu
  
  config GENERIC_CPU
  	bool "Generic-x86-64"
-@@ -286,6 +409,21 @@
+@@ -287,6 +410,21 @@
  	  Generic x86-64 CPU.
  	  Run equally well on all x86-64 CPUs.
  
@@ -270,7 +270,7 @@ diff -Naur a/arch/x86/Kconfig.cpu b/arch/x86/Kconfig.cpu
  endchoice
  
  config X86_GENERIC
-@@ -310,7 +448,7 @@
+@@ -311,7 +449,7 @@
  config X86_L1_CACHE_SHIFT
  	int
  	default "7" if MPENTIUM4 || MPSC
@@ -279,7 +279,7 @@ diff -Naur a/arch/x86/Kconfig.cpu b/arch/x86/Kconfig.cpu
  	default "4" if MELAN || M486 || MGEODEGX1
  	default "5" if MWINCHIP3D || MWINCHIPC6 || MCRUSOE || MEFFICEON || MCYRIXIII || MK6 || MPENTIUMIII || MPENTIUMII || M686 || M586MMX || M586TSC || M586 || MVIAC3_2 || MGEODE_LX
  
-@@ -341,11 +479,11 @@
+@@ -329,11 +467,11 @@
  
  config X86_INTEL_USERCOPY
  	def_bool y
@@ -293,7 +293,7 @@ diff -Naur a/arch/x86/Kconfig.cpu b/arch/x86/Kconfig.cpu
  
  config X86_USE_3DNOW
  	def_bool y
-@@ -369,17 +507,17 @@
+@@ -357,17 +495,17 @@
  
  config X86_TSC
  	def_bool y
@@ -315,16 +315,17 @@ diff -Naur a/arch/x86/Kconfig.cpu b/arch/x86/Kconfig.cpu
  config X86_MINIMUM_CPU_FAMILY
  	int
 diff -Naur a/arch/x86/Makefile b/arch/x86/Makefile
---- a/arch/x86/Makefile	2017-10-05 10:47:47.000000000 +0300
-+++ b/arch/x86/Makefile	2017-10-06 23:39:45.651982404 +0300
-@@ -121,13 +121,47 @@
+--- a/arch/x86/Makefile	2019-02-23 10:08:07.000000000 +0200
++++ b/arch/x86/Makefile	2019-02-24 21:09:05.364240285 +0200
+@@ -118,14 +118,50 @@
  	KBUILD_CFLAGS += $(call cc-option,-mskip-rax-setup)
  
          # FIXME - should be integrated in Makefile.cpu (Makefile_32.cpu)
 -        cflags-$(CONFIG_MK8) += $(call cc-option,-march=k8)
 -        cflags-$(CONFIG_MPSC) += $(call cc-option,-march=nocona)
 -
-+        cflags-$(CONFIG_MNATIVE) += $(call cc-option,-march=native,$(call cc-option,-mtune=native))
++        cflags-$(CONFIG_MNATIVE) += \
++                $(call cc-option,-march=native,$(call cc-option,-mtune=native))
 +        cflags-$(CONFIG_MK8) += \
 +                $(call cc-option,-march=k8,$(call cc-option,-mtune=k8))
 +        cflags-$(CONFIG_MK8SSE3) += \
@@ -349,6 +350,7 @@ diff -Naur a/arch/x86/Makefile b/arch/x86/Makefile
 -                $(call cc-option,-march=core2,$(call cc-option,-mtune=generic))
 -	cflags-$(CONFIG_MATOM) += $(call cc-option,-march=atom) \
 -		$(call cc-option,-mtune=atom,$(call cc-option,-mtune=generic))
+-        cflags-$(CONFIG_GENERIC_CPU) += $(call cc-option,-mtune=generic)
 +                $(call cc-option,-march=core2,$(call cc-option,-mtune=core2))
 +        cflags-$(CONFIG_MNEHALEM) += \
 +                $(call cc-option,-march=nehalem,$(call cc-option,-mtune=nehalem))
@@ -368,13 +370,15 @@ diff -Naur a/arch/x86/Makefile b/arch/x86/Makefile
 +                $(call cc-option,-march=skylake,$(call cc-option,-mtune=skylake))
 +        cflags-$(CONFIG_MATOM) += $(call cc-option,-march=bonnell) \
 +                $(call cc-option,-mtune=bonnell,$(call cc-option,-mtune=generic))
-         cflags-$(CONFIG_GENERIC_CPU) += $(call cc-option,-mtune=generic)
++        cflags-$(CONFIG_GENERIC_CPU) += \
++                $(call cc-option,-mtune=generic)
          KBUILD_CFLAGS += $(cflags-y)
  
+         KBUILD_CFLAGS += -mno-red-zone
 diff -Naur a/arch/x86/Makefile_32.cpu b/arch/x86/Makefile_32.cpu
---- a/arch/x86/Makefile_32.cpu	2017-10-05 10:47:47.000000000 +0300
-+++ b/arch/x86/Makefile_32.cpu	2017-10-06 22:52:53.857174050 +0300
-@@ -22,7 +22,16 @@
+--- a/arch/x86/Makefile_32.cpu	2019-02-23 10:08:07.000000000 +0200
++++ b/arch/x86/Makefile_32.cpu	2019-02-24 21:02:57.056508991 +0200
+@@ -23,7 +23,16 @@
  # Please note, that patches that add -march=athlon-xp and friends are pointless.
  # They make zero difference whatsosever to performance at this time.
  cflags-$(CONFIG_MK7)		+= -march=athlon
@@ -391,7 +395,7 @@ diff -Naur a/arch/x86/Makefile_32.cpu b/arch/x86/Makefile_32.cpu
  cflags-$(CONFIG_MCRUSOE)	+= -march=i686 -falign-functions=0 -falign-jumps=0 -falign-loops=0
  cflags-$(CONFIG_MEFFICEON)	+= -march=i686 $(call tune,pentium3) -falign-functions=0 -falign-jumps=0 -falign-loops=0
  cflags-$(CONFIG_MWINCHIPC6)	+= $(call cc-option,-march=winchip-c6,-march=i586)
-@@ -31,8 +40,16 @@
+@@ -32,8 +41,16 @@
  cflags-$(CONFIG_MVIAC3_2)	+= $(call cc-option,-march=c3-2,-march=i686)
  cflags-$(CONFIG_MVIAC7)		+= -march=i686
  cflags-$(CONFIG_MCORE2)		+= -march=i686 $(call tune,core2)

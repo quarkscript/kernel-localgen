@@ -1,6 +1,6 @@
 ## some experiments
 pkgbase=linux-custom 
-pkgver=4.17.13
+pkgver=4.20.12
 _srcname=linux-${pkgver}
 pkgrel=1
 arch=('x86_64')
@@ -11,10 +11,11 @@ options=('!strip')
 source=("https://www.kernel.org/pub/linux/kernel/v4.x/${_srcname}.tar.xz"
 #        "https://www.kernel.org/pub/linux/kernel/v4.x/${_srcname}.tar.sign"
         'https://github.com/quarkscript/linux-kernel-cpu-patch/raw/master/config'
+#        'config'
         'https://github.com/quarkscript/linux-kernel-cpu-patch/raw/master/cpu.patch'
         'https://github.com/quarkscript/linux-kernel-cpu-patch/raw/master/localcpu'
         'https://github.com/quarkscript/linux-kernel-cpu-patch/raw/master/fixnongpldriver.patch'
-        'https://github.com/quarkscript/Simple_func_scripts/raw/master/cxx_flags'
+        'https://github.com/quarkscript/Simple_func_scripts/raw/master/sfslib'
         )
 sha512sums=('SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP')
 validpgpkeys=(
@@ -25,9 +26,9 @@ _kernelname=${pkgbase#linux}
 
 prepare() {
   # try CPU-optimization patch
-  chmod +x cxx_flags localcpu
-  cp cxx_flags "${srcdir}/${_srcname}/cxx_flags"
-  ${srcdir}/${_srcname}/cxx_flags
+  chmod +x sfslib localcpu
+  cp sfslib "${srcdir}/${_srcname}/sfslib"
+  ${srcdir}/${_srcname}/sfslib cxx_flags
   cp localcpu "${srcdir}/${_srcname}/localcpu"
   cp cpu.patch "${srcdir}/${_srcname}/cpu.patch"
   cp fixnongpldriver.patch "${srcdir}/${_srcname}/fixnongpldriver.patch"

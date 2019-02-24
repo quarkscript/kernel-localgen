@@ -5,108 +5,91 @@
 ## Use: ./localcpu
 ## Author Andrew S.
 ## Licence GPL
-## Tested on Arch Linux and Linux Kernel source 4.14.3
+## Tested on Arch Linux and Linux Kernel source 4.20.12
 ## https://github.com/quarkscript/linux-kernel-cpu-patch
 
-if [ ! -e "cpu.patch" ]
-    then
-    echo -------------------
-    echo cpu.patch not found
-    echo nothing to tune
-    echo -------------------
-elif ! (hash gcc 2>/dev/null)
-    then
-    echo -------------------
-    echo gcc not found, exit
-    echo -------------------
-elif [ -e "localcpu.patch" ]
-    then
-    echo ---------------------------
-    echo localcpu.patch is present
-    echo Tunning will not run
-    echo 
-    echo to gen a new localcpu.patch
-    echo you must remove existing
-    echo ---------------------------
+if [ ! -e "cpu.patch" ]; then
+echo "-------------------
+cpu.patch not found
+nothing to tune
+-------------------"
+elif ! (hash gcc 2>/dev/null); then
+echo "-------------------
+gcc not found, exit
+-------------------"
+elif [ -e "localcpu.patch" ]; then
+echo "---------------------------
+localcpu.patch is present
+Tunning will not run
+
+To gen a new localcpu.patch
+firstly remove existed
+---------------------------"
 else
-    if [ ! -e "cxxflags.txt" ]
-        then
-            if [ ! -e "cxx_flags" ]
-                then
-                    wget https://github.com/quarkscript/Simple_func_scripts/raw/master/cxx_flags
-                    chmod +x cxx_flags
-            fi
-            ./cxx_flags
+    if [ ! -e "cxxflags.txt" ]; then
+        if [ ! -e "sfslib" ]; then
+            wget https://github.com/quarkscript/Simple_func_scripts/raw/master/sfslib
+            chmod +x sfslib
+        fi
+        ./sfslib cxx_flags
     fi
-    
     cp cpu.patch localcpu.patch
     count=0
-    for k in $(cat cxxflags.txt | sed -e 's/--param//g')
-        do
-            if [ "$count" -eq "0" ]
-                then
-                    enabl="$k "
-                    call_cc="$""(call cc-option,$k"
-                    for i in core2 nehalem westmere silvermont sandybridge ivybridge haswell broadwell skylake k8-sse3 amdfam10 barcelona btver1 bdver1 bdver2 bdver3 btver2
-                        do
-                            if (grep $i cxxflags.txt -q) 
-                                then
-                                    arrch=$i
-                            fi
-                            done
-                else
-                    if $(echo $k | grep cache -q)
-                        then 
-                            enabl+="--param $k "
-                            call_cc+=",$""(call cc-option,--param $k)"
-                        else
-                            enabl+="$k "
-                            call_cc+=",$""(call cc-option,$k)"
-                    fi
+    for k in $(cat cxxflags.txt | sed -e 's/--param//g'); do
+        if [ "$count" -eq "0" ]; then
+            for i in core2 nehalem westmere silvermont sandybridge ivybridge haswell broadwell skylake k8-sse3 amdfam10 barcelona btver1 bdver1 bdver2 bdver3 btver2
+                do
+                    if (grep $i cxxflags.txt -q); then arrch=$i; fi
+                done
+                if [ "$arrch" == "" ]; then 
+                    arrch=native
+                    echo -----------------------------------------------------
+                    echo 'Current CPU is not fully supported by patch source.'
+                    echo 'Custom gcc flags will be add to native optimization.'
                 fi
-                count=$(($count+1))
+                if $(echo $k | grep -q march)&&$(echo $arrch | grep -q native); then kk='-march=native'; else kk=$k; fi
+                enabl="$kk "
+                call_cc="$""(call cc-option,$kk"
+        else
+            if $(echo $k | grep -q mtune)&&$(echo $arrch | grep -q native); then kk='-mtune=native'; else kk=$k; fi
+            if $(echo $k | grep cache -q); then 
+                enabl+="--param $kk "
+                call_cc+=",$""(call cc-option,--param $kk)"
+            else
+                enabl+="$kk "
+                call_cc+=",$""(call cc-option,$kk)"
+            fi
+        fi
+        count=$(($count+1))
     done
     call_cc+=")"
-
-    if [ -z $arrch ]
+    p_t='Enables -march='$arrch
+    l_n=$(grep -n "$p_t" localcpu.patch | sed -e 's/:.*//g')
+    head -n $(($l_n-1)) localcpu.patch >patch.patch
+    echo "+	  Enables "$enabl>>patch.patch
+    tail -n +$(($l_n+1)) localcpu.patch >>patch.patch
+    rm -f localcpu.patch
+    cp -f patch.patch localcpu.patch
+    rm -f patch.patch
+    p_t='$(call cc-option,-march='$arrch',$(call cc-option,-mtune='$arrch'))'
+    l_n=$(grep -n "$p_t" localcpu.patch | sed -e 's/:.*//g')
+    head -n $(($l_n-1)) localcpu.patch >patch.patch
+    echo "+        "$call_cc>>patch.patch
+    tail -n +$(($l_n+1)) localcpu.patch >>patch.patch
+    rm -f localcpu.patch
+    cp -f patch.patch localcpu.patch
+    rm -f patch.patch
+    echo "-----------------------------------------------------
+Linux kernel can be better optimized to 
+$(grep 'model name' /proc/cpuinfo --max-count=1 | sed 's/.*\: //g' | sed 's/  / /g' | sed 's/  / /g' | sed 's/  / /g')
+just patch kernel source with localcpu.patch and
+select '$arrch' CPU-family while configuring it
+-----------------------------------------------------"
+    if [ ! "$(sha512sum cpu.patch | sed -e 's/  cpu.patch//')" == "a47056edeac72c730cecfda766a3941bb004ee4523cfd3a276e9d4c717ae51c8c89f992ee7f0dfffe313846056e4f5bad58f92f64806cba4933d61fdad7cce13" ]
         then
-        echo -----------------------------------------------------
-        echo CPU type is undetected, tuning of cpu.patch
-        echo is not possible for now. It is better to use native
-        echo or generic optimizations '('do not forget to patch
-        echo kernel source with original cpu.patch')'
-        echo -----------------------------------------------------
-        rm -f localcpu.patch
-    else
-        p_t='Enables -march='$arrch
-        l_n=$(grep -n "$p_t" localcpu.patch | sed -e 's/:.*//g')
-        head -n $(($l_n-1)) localcpu.patch >patch.patch
-        echo "+	  Enables "$enabl>>patch.patch
-        tail -n +$(($l_n+1)) localcpu.patch >>patch.patch
-        rm -f localcpu.patch
-        cp -f patch.patch localcpu.patch
-        rm -f patch.patch
-        p_t='$(call cc-option,-march='$arrch',$(call cc-option,-mtune='$arrch'))'
-        l_n=$(grep -n "$p_t" localcpu.patch | sed -e 's/:.*//g')
-        head -n $(($l_n-1)) localcpu.patch >patch.patch
-        echo "+        "$call_cc>>patch.patch
-        tail -n +$(($l_n+1)) localcpu.patch >>patch.patch
-        rm -f localcpu.patch
-        cp -f patch.patch localcpu.patch
-        rm -f patch.patch
-        echo -----------------------------------------------------
-        echo Linux kernel can be better optimized to 
-        echo CPU $(grep 'model name' /proc/cpuinfo --max-count=1)
-        echo just patch kernel source with localcpu.patch and
-        echo select '"'$arrch'"' CPU-family while configuring it
-        echo -----------------------------------------------------
-    fi
-    if [ ! "$(sha512sum cpu.patch | sed -e 's/  cpu.patch//')" == "3a034d8d86568d59ac6f5e1e681f3af084e6a444b311d5117293924d43af643f2061c5662699a1f0cd925d85295d76daf0a1ed5225d8b9761959d5de06e48d4c" ]
-        then
-        echo cpu.patch is differ from the original cpu.patch
-        echo Wrong source can leads to fails. Be aware
-        echo 
+        echo 'cpu.patch is differ from expexted,
+wrong source can leads to fails. Be aware.
+'
     fi
     rm -f /tmp/hw_test.txt /tmp/capabilities.txt 
 fi
-
