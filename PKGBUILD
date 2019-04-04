@@ -1,23 +1,21 @@
 ## some experiments
 pkgbase=linux-custom 
-pkgver=4.20.12
+pkgver=5.0.6
 _srcname=linux-${pkgver}
-pkgrel=1
+pkgrel=2
 arch=('x86_64')
 url="http://www.kernel.org/"
 license=('GPL2')
 makedepends=('xmlto' 'docbook-xsl' 'kmod' 'inetutils' 'bc' 'libelf')
 options=('!strip')
-source=("https://www.kernel.org/pub/linux/kernel/v4.x/${_srcname}.tar.xz"
-#        "https://www.kernel.org/pub/linux/kernel/v4.x/${_srcname}.tar.sign"
+source=("https://www.kernel.org/pub/linux/kernel/v5.x/${_srcname}.tar.xz"
+#        "https://www.kernel.org/pub/linux/kernel/v5.x/${_srcname}.tar.sign"
         'https://github.com/quarkscript/linux-kernel-cpu-patch/raw/master/config'
-#        'config'
         'https://github.com/quarkscript/linux-kernel-cpu-patch/raw/master/cpu.patch'
         'https://github.com/quarkscript/linux-kernel-cpu-patch/raw/master/localcpu'
         'https://github.com/quarkscript/linux-kernel-cpu-patch/raw/master/fixnongpldriver.patch'
-        'https://github.com/quarkscript/Simple_func_scripts/raw/master/sfslib'
         )
-sha512sums=('SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP')
+sha512sums=('SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP')
 validpgpkeys=(
               'ABAF11C65A2970B130ABE3C479BE3E4300411886' # Linus Torvalds
               '647F28654894E3BD457199BE38DBBDC86092693E' # Greg Kroah-Hartman
@@ -26,13 +24,11 @@ _kernelname=${pkgbase#linux}
 
 prepare() {
   # try CPU-optimization patch
-  chmod +x sfslib localcpu
-  cp sfslib "${srcdir}/${_srcname}/sfslib"
-  ${srcdir}/${_srcname}/sfslib cxx_flags
   cp localcpu "${srcdir}/${_srcname}/localcpu"
   cp cpu.patch "${srcdir}/${_srcname}/cpu.patch"
   cp fixnongpldriver.patch "${srcdir}/${_srcname}/fixnongpldriver.patch"
   cd "${srcdir}/${_srcname}"
+  chmod +x localcpu
   ./localcpu
   patch -p1 -i localcpu.patch
   patch -p1 -i fixnongpldriver.patch
@@ -68,6 +64,8 @@ _package() {
   mkdir -p "${pkgdir}"/{lib/modules,lib/firmware,boot}
   make LOCALVERSION= INSTALL_MOD_PATH="${pkgdir}" modules_install
   cp arch/$KARCH/boot/bzImage "${pkgdir}/boot/vmlinuz-${pkgbase}"
+
+## gen. req. files
 KERNEL_NAME='${KERNEL_NAME}'
 KERNEL_VERSION='${KERNEL_VERSION}'
 cat<<EOF>"${startdir}/${pkgbase}.pkg"
@@ -100,7 +98,9 @@ post_remove() {
   rm -f boot/initramfs-linux${KERNEL_NAME}-fallback.img
 }
 EOF
+##
 true && install=${pkgbase}.pkg  
+##
 cat<<EOF>"${srcdir}/${pkgbase}.preset"
 # mkinitcpio preset file for the 'linux' package
 
@@ -117,7 +117,40 @@ default_image="/boot/initramfs-linux${_kernelname}.img"
 fallback_image="/boot/initramfs-linux${_kernelname}-fallback.img" 
 fallback_options="-S autodetect"
 EOF
+##
+cat<<EOF>"${srcdir}/60-$pkgbase.hook"
+[Trigger]
+Type = File
+Operation = Install
+Operation = Upgrade
+Operation = Remove
+Target = usr/lib/modules/$_kernver/*
+Target = usr/lib/modules/"extramodules-${_basekernel}${_kernelname}"/*
+
+[Action]
+Description = Updating $pkgbase module dependencies...
+When = PostTransaction
+Exec = /usr/bin/depmod $_kernver
+EOF
+##
+cat<<EOF>"${srcdir}/90-$pkgbase.hook"
+[Trigger]
+Type = File
+Operation = Install
+Operation = Upgrade
+Target = usr/lib/modules/$_kernver/vmlinuz
+Target = usr/lib/initcpio/*
+
+[Action]
+Description = Updating $pkgbase initcpios...
+When = PostTransaction
+Exec = /usr/bin/mkinitcpio -p $pkgbase
+EOF
+## end gen. req. files
+
   install -D -m644 "${srcdir}/${pkgbase}.preset" "${pkgdir}/etc/mkinitcpio.d/${pkgbase}.preset"
+  install -D -m644 "${srcdir}/60-$pkgbase.hook" "$pkgdir/usr/share/libalpm/hooks/60-$pkgbase.hook"
+  install -D -m644 "${srcdir}/90-$pkgbase.hook" "$pkgdir/usr/share/libalpm/hooks/90-$pkgbase.hook"
   # remove build and source links
   rm -f "${pkgdir}"/lib/modules/${_kernver}/{source,build}
   # remove the firmware
