@@ -1,8 +1,8 @@
 ## some experiments
 pkgbase=linux-custom 
-pkgver=5.0.6
+pkgver=5.6.17
 _srcname=linux-${pkgver}
-pkgrel=2
+pkgrel=1
 arch=('x86_64')
 url="http://www.kernel.org/"
 license=('GPL2')
@@ -13,9 +13,8 @@ source=("https://www.kernel.org/pub/linux/kernel/v5.x/${_srcname}.tar.xz"
         'https://github.com/quarkscript/linux-kernel-cpu-patch/raw/master/config'
         'https://github.com/quarkscript/linux-kernel-cpu-patch/raw/master/cpu.patch'
         'https://github.com/quarkscript/linux-kernel-cpu-patch/raw/master/localcpu'
-        'https://github.com/quarkscript/linux-kernel-cpu-patch/raw/master/fixnongpldriver.patch'
         )
-sha512sums=('SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP')
+sha512sums=('SKIP' 'SKIP' 'SKIP' 'SKIP')
 validpgpkeys=(
               'ABAF11C65A2970B130ABE3C479BE3E4300411886' # Linus Torvalds
               '647F28654894E3BD457199BE38DBBDC86092693E' # Greg Kroah-Hartman
@@ -26,12 +25,10 @@ prepare() {
   # try CPU-optimization patch
   cp localcpu "${srcdir}/${_srcname}/localcpu"
   cp cpu.patch "${srcdir}/${_srcname}/cpu.patch"
-  cp fixnongpldriver.patch "${srcdir}/${_srcname}/fixnongpldriver.patch"
   cd "${srcdir}/${_srcname}"
   chmod +x localcpu
   ./localcpu
   patch -p1 -i localcpu.patch
-  patch -p1 -i fixnongpldriver.patch
   cat "${srcdir}/config" > ./.config
   # set extraversion to pkgrel
   sed -ri "s|^(EXTRAVERSION =).*|\1 -${pkgrel}|" Makefile

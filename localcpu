@@ -95,7 +95,7 @@ just patch kernel source with localcpu.patch and
 select '$arrch' CPU-family while configuring it
 -----------------------------------------------------"
     fi
-    if [ ! "$(sha512sum cpu.patch | sed -e 's/  cpu.patch//')" == "1f5518e8cfe26e2dd4a06754da08a014226e9c926775f2975db9851e0405f52918189f7cc70b075ab800b734987f0da919d6b738669641f5bb390d650a4cfe6b" ]; then
+    if [ ! "$(sha512sum cpu.patch | sed -e 's/  cpu.patch//')" == "c4022de94a366aa209c7059ab7945c4ab7170bc145690b6d371fac7ce6312ef9649c225bd6c1bb5cf5439d061049731199fb7d9083e8d7145c6e681b921ffa7f" ]; then
         echo "
 cpu.patch is differ from the expexted..
 Wrong source can leads to fails. Be aware"
