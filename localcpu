@@ -5,7 +5,7 @@
 ## Use: ./localcpu
 ## Author Andrew S.
 ## Licence GPL
-## Tested on Arch Linux and Linux Kernel source 5.0.6
+## Tested on Arch Linux and Linux Kernel source 5.7.3
 ## https://github.com/quarkscript/old-pc-linux-kernel
 
 if [ ! -e "cpu.patch" ]; then
@@ -29,6 +29,11 @@ to gen a new localcpu.patch
 you must remove existing
 ---------------------------"
 else
+    if [ "$(gcc -v 2>&1 | grep version | sed 's/.*version //g' | sed 's/\..*//g')" != "10" ]; then
+        echo "seems like gcc ver < 10.x"
+        sleep 2
+    fi
+
     if [ ! -e "cxxflags.txt" ]; then
         if [ ! -e "sfslib" ]; then
             wget https://github.com/quarkscript/Simple_func_scripts/raw/master/sfslib
@@ -43,7 +48,7 @@ else
         if [ "$count" -eq "0" ]; then
             enabl="$k "
             call_cc="$""(call cc-option,$k"
-            for i in core2 nehalem westmere silvermont sandybridge ivybridge haswell broadwell skylake k8-sse3 amdfam10 barcelona btver1 bdver1 bdver2 bdver3 btver2 bdver4 znver1 nocona skylake-avx512 cannonlake icelake; do
+            for i in core2 nehalem westmere silvermont sandybridge ivybridge haswell broadwell skylake k8-sse3 amdfam10 barcelona btver1 bdver1 bdver2 bdver3 btver2 bdver4 znver1 znver2 nocona skylake-avx512 cannonlake icelake cascadelake cooperlake tigerlake; do
                 if (grep $i cxxflags.txt -q); then
                     arrch=$i
                 fi
@@ -89,15 +94,17 @@ kernel source with original cpu.patch')'
         rm -f patch.patch
         echo "
 -----------------------------------------------------
-Linux kernel can be better optimized to 
+Linux kernel could be better optimized to 
 CPU $(echo $(grep 'model name' /proc/cpuinfo --max-count=1) | sed 's/  //g')
 just patch kernel source with localcpu.patch and
 select '$arrch' CPU-family while configuring it
 -----------------------------------------------------"
+sleep 2
     fi
-    if [ ! "$(sha512sum cpu.patch | sed -e 's/  cpu.patch//')" == "c4022de94a366aa209c7059ab7945c4ab7170bc145690b6d371fac7ce6312ef9649c225bd6c1bb5cf5439d061049731199fb7d9083e8d7145c6e681b921ffa7f" ]; then
+    if [ ! "$(sha512sum cpu.patch | sed -e 's/  cpu.patch//')" == "8dc588bdaa8dd9ec06f2df14b42f6d627c0ee7d3ec32684d4bc54b8cb24f6038e9280fa451affbb2c93c73f2592121aa15cc0552dcb784e73ade3a4391d4651d" ]; then
         echo "
 cpu.patch is differ from the expexted..
 Wrong source can leads to fails. Be aware"
+sleep 2
     fi
 fi
