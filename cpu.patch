@@ -39,7 +39,7 @@ diff -Naur a/arch/x86/Kconfig.cpu b/arch/x86/Kconfig.cpu
 +	  - "Intel Cascadelake"
 +	  - "Intel Cooperlake"
 +	  - "Intel Tigerlake"
-+	  - "Native" for a gcc automatic optomization.
++	  - "Native" for a gcc automatic optimization.
  	  - "Generic-x86-64" for a kernel which runs on any x86-64 CPU.
  
  	  See each option's help text for additional details. If you don't know
@@ -577,7 +577,7 @@ diff -Naur a/arch/x86/Makefile b/arch/x86/Makefile
 +                $(call cc-option,-march=bdver4)
 +        cflags-$(CONFIG_MZEN1)+= \
 +                $(call cc-option,-march=znver1)
-+	cflags-$(CONFIG_MZEN2)+= \
++        cflags-$(CONFIG_MZEN2)+= \
 +                $(call cc-option,-march=znver2)
 +        cflags-$(CONFIG_MCRUSOE)+= \
 +                $(call cc-option,-march=i686 -falign-functions=0 -falign-jumps=0 -falign-loops=0)
@@ -613,11 +613,11 @@ diff -Naur a/arch/x86/Makefile b/arch/x86/Makefile
 +                $(call cc-option,-march=cannonlake)
 +        cflags-$(CONFIG_MICELAKE)+= \
 +                $(call cc-option,-march=icelake)
-+	cflags-$(CONFIG_MCASCADELAKE)+= \
++        cflags-$(CONFIG_MCASCADELAKE)+= \
 +                $(call cc-option,-march=cascadelake)
-+	cflags-$(CONFIG_MCOOPERLAKE)+= \
++        cflags-$(CONFIG_MCOOPERLAKE)+= \
 +                $(call cc-option,-march=cooperlake)
-+	cflags-$(CONFIG_MTIGERLAKE)+= \
++        cflags-$(CONFIG_MTIGERLAKE)+= \
 +                $(call cc-option,-march=tigerlake)
 +        cflags-$(CONFIG_MATOM)+= \
 +                $(call cc-option,-march=i686 -mtune=generic)
@@ -642,33 +642,33 @@ diff -Naur a/arch/x86/Makefile b/arch/x86/Makefile
 -        cflags-$(CONFIG_MPSC) += $(call cc-option,-march=nocona)
 -
 +        cflags-$(CONFIG_MNATIVE) += \
-+		$(call cc-option,-march=native)
++                $(call cc-option,-march=native)
 +        cflags-$(CONFIG_MK8) += \
-+		$(call cc-option,-march=k8,$(call cc-option,-mtune=k8))
++                $(call cc-option,-march=k8,$(call cc-option,-mtune=k8))
 +        cflags-$(CONFIG_MK8SSE3) += \
-+		$(call cc-option,-march=k8-sse3,$(call cc-option,-mtune=k8-sse3))
++                $(call cc-option,-march=k8-sse3,$(call cc-option,-mtune=k8-sse3))
 +        cflags-$(CONFIG_MK10) += \
-+		$(call cc-option,-march=amdfam10,$(call cc-option,-mtune=amdfam10))
++                $(call cc-option,-march=amdfam10,$(call cc-option,-mtune=amdfam10))
 +        cflags-$(CONFIG_MBARCELONA) += \
-+		$(call cc-option,-march=barcelona,$(call cc-option,-mtune=barcelona))
++                $(call cc-option,-march=barcelona,$(call cc-option,-mtune=barcelona))
 +        cflags-$(CONFIG_MBOBCAT) += \
-+		$(call cc-option,-march=btver1,$(call cc-option,-mtune=btver1))
++                $(call cc-option,-march=btver1,$(call cc-option,-mtune=btver1))
 +        cflags-$(CONFIG_MJAGUAR) += \
-+		$(call cc-option,-march=btver2,$(call cc-option,-mtune=btver2))
++                $(call cc-option,-march=btver2,$(call cc-option,-mtune=btver2))
 +        cflags-$(CONFIG_MBULLDOZER) += \
-+		$(call cc-option,-march=bdver1,$(call cc-option,-mtune=bdver1))
++                $(call cc-option,-march=bdver1,$(call cc-option,-mtune=bdver1))
 +        cflags-$(CONFIG_MPILEDRIVER) += \
-+		$(call cc-option,-march=bdver2,$(call cc-option,-mtune=bdver2))
++                $(call cc-option,-march=bdver2,$(call cc-option,-mtune=bdver2))
 +        cflags-$(CONFIG_MSTEAMROLLER) += \
-+		$(call cc-option,-march=bdver3,$(call cc-option,-mtune=bdver3))
++                $(call cc-option,-march=bdver3,$(call cc-option,-mtune=bdver3))
 +        cflags-$(CONFIG_MEXCAVATOR) += \
-+		$(call cc-option,-march=bdver4,$(call cc-option,-mtune=bdver4))
++                $(call cc-option,-march=bdver4,$(call cc-option,-mtune=bdver4))
 +        cflags-$(CONFIG_MZEN1) += \
-+		$(call cc-option,-march=znver1,$(call cc-option,-mtune=znver1))
-+	cflags-$(CONFIG_MZEN2) += \
-+		$(call cc-option,-march=znver2,$(call cc-option,-mtune=znver2))
++                $(call cc-option,-march=znver1,$(call cc-option,-mtune=znver1))
++        cflags-$(CONFIG_MZEN2) += \
++                $(call cc-option,-march=znver2,$(call cc-option,-mtune=znver2))
 +        cflags-$(CONFIG_MPSC) += \
-+		$(call cc-option,-march=nocona,$(call cc-option,-mtune=nocona))
++                $(call cc-option,-march=nocona,$(call cc-option,-mtune=nocona))
          cflags-$(CONFIG_MCORE2) += \
 -                $(call cc-option,-march=core2,$(call cc-option,-mtune=generic))
 -	cflags-$(CONFIG_MATOM) += $(call cc-option,-march=atom) \
@@ -697,16 +697,16 @@ diff -Naur a/arch/x86/Makefile b/arch/x86/Makefile
 +                $(call cc-option,-march=cannonlake,$(call cc-option,-mtune=cannonlake))
 +        cflags-$(CONFIG_MICELAKE) += \
 +                $(call cc-option,-march=icelake,$(call cc-option,-mtune=icelake))
-+	cflags-$(CONFIG_MCASCADELAKE)+= \
++        cflags-$(CONFIG_MCASCADELAKE)+= \
 +                $(call cc-option,-march=cascadelake,$(call cc-option,-mtune=cascadelake))
-+	cflags-$(CONFIG_MCOOPERLAKE)+= \
++        cflags-$(CONFIG_MCOOPERLAKE)+= \
 +                $(call cc-option,-march=cooperlake,$(call cc-option,-mtune=cooperlake))
-+	cflags-$(CONFIG_MTIGERLAKE)+= \
++        cflags-$(CONFIG_MTIGERLAKE)+= \
 +                $(call cc-option,-march=tigerlake,$(call cc-option,-mtune=tigerlake))
 +        cflags-$(CONFIG_MATOM) += \
-+		$(call cc-option,-march=bonnell,$(call cc-option,-mtune=bonnell),$(call cc-option,-mtune=generic))
++                $(call cc-option,-march=bonnell,$(call cc-option,-mtune=bonnell),$(call cc-option,-mtune=generic))
 +        cflags-$(CONFIG_GENERIC_CPU) += \
-+		$(call cc-option,-mtune=generic)
++                $(call cc-option,-mtune=generic)
          KBUILD_CFLAGS += $(cflags-y)
  
          KBUILD_CFLAGS += -mno-red-zone

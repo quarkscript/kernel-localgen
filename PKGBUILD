@@ -1,18 +1,18 @@
 ## some experiments
 pkgbase=linux-custom 
-pkgver=5.6.17
+pkgver=5.7.7
 _srcname=linux-${pkgver}
 pkgrel=1
 arch=('x86_64')
 url="http://www.kernel.org/"
 license=('GPL2')
-makedepends=('xmlto' 'docbook-xsl' 'kmod' 'inetutils' 'bc' 'libelf')
+makedepends=('xmlto' 'docbook-xsl' 'kmod' 'inetutils' 'bc' 'libelf' 'pahole')
 options=('!strip')
 source=("https://www.kernel.org/pub/linux/kernel/v5.x/${_srcname}.tar.xz"
 #        "https://www.kernel.org/pub/linux/kernel/v5.x/${_srcname}.tar.sign"
-        'https://github.com/quarkscript/linux-kernel-cpu-patch/raw/master/config'
-        'https://github.com/quarkscript/linux-kernel-cpu-patch/raw/master/cpu.patch'
-        'https://github.com/quarkscript/linux-kernel-cpu-patch/raw/master/localcpu'
+        'https://raw.githubusercontent.com/quarkscript/custom-linux-kernel/master/conf_tmpl'
+        'https://raw.githubusercontent.com/quarkscript/custom-linux-kernel/master/cpu.patch'
+        'https://raw.githubusercontent.com/quarkscript/Simple_func_scripts/master/sfslib'
         )
 sha512sums=('SKIP' 'SKIP' 'SKIP' 'SKIP')
 validpgpkeys=(
@@ -23,13 +23,30 @@ _kernelname=${pkgbase#linux}
 
 prepare() {
   # try CPU-optimization patch
-  cp localcpu "${srcdir}/${_srcname}/localcpu"
+  cp sfslib "${srcdir}/${_srcname}/sfslib"
   cp cpu.patch "${srcdir}/${_srcname}/cpu.patch"
+  cp conf_tmpl "${srcdir}/${_srcname}/conf_tmpl"
   cd "${srcdir}/${_srcname}"
-  chmod +x localcpu
-  ./localcpu
+  chmod +x sfslib
+  
+  temp_var=$(./sfslib localcpu)
+  
   patch -p1 -i localcpu.patch
-  cat "${srcdir}/config" > ./.config
+  
+  yes '' | make localmodconfig
+  
+  echo '
+  force integrate template to generated kernel config
+  '
+  ./sfslib fti
+  if $(echo $temp_var | grep -q "select '"); then
+    cpu_archite=$(echo $temp_var | sed "s/.*select '//g" | sed "s/'.*//g")
+    echo "CONFIG_M${cpu_archite^^}=y">>.config
+  else
+    #echo "CONFIG_MNATIVE=y">>.config
+    echo "CONFIG_GENERIC_CPU=y">>.config
+  fi
+  
   # set extraversion to pkgrel
   sed -ri "s|^(EXTRAVERSION =).*|\1 -${pkgrel}|" Makefile
   # don't run depmod on 'make install'. We'll do this ourselves in packaging
@@ -177,8 +194,7 @@ _package-headers() {
   install -D -m644 .config \
     "${pkgdir}/usr/lib/modules/${_kernver}/build/.config"
   mkdir -p "${pkgdir}/usr/lib/modules/${_kernver}/build/include"
-  for i in acpi asm-generic config crypto drm generated keys linux math-emu \
-    media net pcmcia scsi soc sound trace uapi video xen; do
+  for i in $(ls include/); do
     cp -a include/${i} "${pkgdir}/usr/lib/modules/${_kernver}/build/include/"
   done
   # copy arch includes for external modules
@@ -236,18 +252,6 @@ _package-headers() {
   rm -f "${pkgdir}/usr/lib/modules/${_kernver}/build/Documentation/kbuild/Kconfig.select-break"
 }
 
-_package-docs() {
-  pkgdesc="Kernel hackers manual - HTML documentation that comes with the ${pkgbase/linux/Linux} kernel"
-  cd "${srcdir}/${_srcname}"
-  mkdir -p "${pkgdir}/usr/lib/modules/${_kernver}/build"
-  cp -al Documentation "${pkgdir}/usr/lib/modules/${_kernver}/build"
-  find "${pkgdir}" -type f -exec chmod 444 {} \;
-  find "${pkgdir}" -type d -exec chmod 755 {} \;
-  # remove a file already in linux package
-  rm -f "${pkgdir}/usr/lib/modules/${_kernver}/build/Documentation/DocBook/Makefile"
-}
-
-#pkgname=("${pkgbase}" "${pkgbase}-headers" "${pkgbase}-docs")
 pkgname=("${pkgbase}" "${pkgbase}-headers")
 for _p in ${pkgname[@]}; do
   eval "package_${_p}() {
