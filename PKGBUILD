@@ -1,6 +1,6 @@
 ## some experiments
 pkgbase=linux-custom 
-pkgver=5.7.7
+pkgver=5.8.1
 _srcname=linux-${pkgver}
 pkgrel=1
 arch=('x86_64')
@@ -11,7 +11,8 @@ options=('!strip')
 source=("https://www.kernel.org/pub/linux/kernel/v5.x/${_srcname}.tar.xz"
 #        "https://www.kernel.org/pub/linux/kernel/v5.x/${_srcname}.tar.sign"
         'https://raw.githubusercontent.com/quarkscript/custom-linux-kernel/master/conf_tmpl'
-        'https://raw.githubusercontent.com/quarkscript/custom-linux-kernel/master/cpu.patch'
+#        'https://raw.githubusercontent.com/quarkscript/custom-linux-kernel/master/cpu.patch'
+        'https://raw.githubusercontent.com/quarkscript/custom-linux-kernel/master/cpu_5.8.1.patch'
         'https://raw.githubusercontent.com/quarkscript/Simple_func_scripts/master/sfslib'
         )
 sha512sums=('SKIP' 'SKIP' 'SKIP' 'SKIP')
@@ -24,7 +25,8 @@ _kernelname=${pkgbase#linux}
 prepare() {
   # try CPU-optimization patch
   cp sfslib "${srcdir}/${_srcname}/sfslib"
-  cp cpu.patch "${srcdir}/${_srcname}/cpu.patch"
+  #cp cpu.patch "${srcdir}/${_srcname}/cpu.patch"
+  cp cpu_5.8.1.patch "${srcdir}/${_srcname}/cpu.patch"
   cp conf_tmpl "${srcdir}/${_srcname}/conf_tmpl"
   cd "${srcdir}/${_srcname}"
   chmod +x sfslib
@@ -163,8 +165,8 @@ EOF
 ## end gen. req. files
 
   install -D -m644 "${srcdir}/${pkgbase}.preset" "${pkgdir}/etc/mkinitcpio.d/${pkgbase}.preset"
-  install -D -m644 "${srcdir}/60-$pkgbase.hook" "$pkgdir/usr/share/libalpm/hooks/60-$pkgbase.hook"
-  install -D -m644 "${srcdir}/90-$pkgbase.hook" "$pkgdir/usr/share/libalpm/hooks/90-$pkgbase.hook"
+  #install -D -m644 "${srcdir}/60-$pkgbase.hook" "$pkgdir/usr/share/libalpm/hooks/60-$pkgbase.hook"
+  #install -D -m644 "${srcdir}/90-$pkgbase.hook" "$pkgdir/usr/share/libalpm/hooks/90-$pkgbase.hook"
   # remove build and source links
   rm -f "${pkgdir}"/lib/modules/${_kernver}/{source,build}
   # remove the firmware
