@@ -1,344 +1,263 @@
-# forked from https://github.com/archlinuxarm/PKGBUILDs/tree/master/core/linux-armv7
-
-pkgbase=linux-armv7-xe303c12
-pkgname=$pkgbase
-_srcname=linux-5.8
-_kernelname=${pkgbase#linux}
-_desc="ARMv7 XE303C12-platform"
-pkgver=5.8.13
-pkgrel=3
-rcnver=5.8.5
-rcnrel=armv7-x11
-arch=('armv7h')
+## some experiments
+pkgbase=linux-custom 
+pkgver=5.8.8
+_srcname=linux-${pkgver}
+pkgrel=1
+arch=('x86_64')
 url="http://www.kernel.org/"
 license=('GPL2')
-makedepends=('xmlto' 'docbook-xsl' 'kmod' 'inetutils' 'bc' 'git' 'uboot-tools' 'vboot-utils' 'dtc')
+makedepends=('xmlto' 'docbook-xsl' 'kmod' 'inetutils' 'bc' 'libelf' 'pahole')
 options=('!strip')
-source=("http://www.kernel.org/pub/linux/kernel/v5.x/${_srcname}.tar.xz"
-        "http://www.kernel.org/pub/linux/kernel/v5.x/patch-${pkgver}.xz"
-        "http://rcn-ee.com/deb/stretch-armhf/v${rcnver}-${rcnrel}/patch-${rcnver%.0}-${rcnrel}.diff.xz"
-        'https://raw.githubusercontent.com/archlinuxarm/PKGBUILDs/master/core/linux-armv7/0001-ARM-atags-add-support-for-Marvell-s-u-boot.patch'
-        'https://raw.githubusercontent.com/archlinuxarm/PKGBUILDs/master/core/linux-armv7/0002-ARM-atags-fdt-retrieve-MAC-addresses-from-Marvell-bo.patch'
-        'https://raw.githubusercontent.com/archlinuxarm/PKGBUILDs/master/core/linux-armv7/0003-SMILE-Plug-device-tree-file.patch'
-        'https://raw.githubusercontent.com/archlinuxarm/PKGBUILDs/master/core/linux-armv7/0004-fix-mvsdio-eMMC-timing.patch'
-        'https://raw.githubusercontent.com/archlinuxarm/PKGBUILDs/master/core/linux-armv7/0005-net-smsc95xx-Allow-mac-address-to-be-set-as-a-parame.patch'
-        'https://raw.githubusercontent.com/archlinuxarm/PKGBUILDs/master/core/linux-armv7/0006-set-default-cubietruck-led-triggers.patch'
-        'https://raw.githubusercontent.com/archlinuxarm/PKGBUILDs/master/core/linux-armv7/0007-exynos4412-odroid-set-higher-minimum-buck2-regulator.patch'
-        'https://raw.githubusercontent.com/archlinuxarm/PKGBUILDs/master/core/linux-armv7/0008-ARM-dove-enable-ethernet-on-D3Plug.patch'
-        'https://raw.githubusercontent.com/archlinuxarm/PKGBUILDs/master/core/linux-armv7/0009-USB-Armory-MkII-support.patch'
-        'config'
-        'kernel.its'
-        'https://github.com/archlinuxarm/PKGBUILDs/raw/master/core/linux-armv7/kernel.keyblock'
-        'https://github.com/archlinuxarm/PKGBUILDs/raw/master/core/linux-armv7/kernel_data_key.vbprivk'
-)
-md5sums=('SKIP'
-         'SKIP'
-         'SKIP'
-         'SKIP'
-         'SKIP'
-         'SKIP'
-         'SKIP'
-         'SKIP'
-         'SKIP'
-         'SKIP'
-         'SKIP'
-         'SKIP'
-         'SKIP'
-         'SKIP'
-         'SKIP'
-         'SKIP')
+source=("https://www.kernel.org/pub/linux/kernel/v5.x/${_srcname}.tar.xz"
+#        "https://www.kernel.org/pub/linux/kernel/v5.x/${_srcname}.tar.sign"
+        'https://raw.githubusercontent.com/quarkscript/custom-linux-kernel/master/conf_tmpl'
+#        'https://raw.githubusercontent.com/quarkscript/custom-linux-kernel/master/cpu.patch'
+        'https://raw.githubusercontent.com/quarkscript/custom-linux-kernel/master/cpu_5.8.1.patch'
+        'https://raw.githubusercontent.com/quarkscript/Simple_func_scripts/master/sfslib'
+        )
+sha512sums=('SKIP' 'SKIP' 'SKIP' 'SKIP')
+validpgpkeys=(
+              'ABAF11C65A2970B130ABE3C479BE3E4300411886' # Linus Torvalds
+              '647F28654894E3BD457199BE38DBBDC86092693E' # Greg Kroah-Hartman
+             )
+_kernelname=${pkgbase#linux}
 
 prepare() {
+  # try CPU-optimization patch
+  cp sfslib "${srcdir}/${_srcname}/sfslib"
+  #cp cpu.patch "${srcdir}/${_srcname}/cpu.patch"
+  cp cpu_5.8.1.patch "${srcdir}/${_srcname}/cpu.patch"
+  cp conf_tmpl "${srcdir}/${_srcname}/conf_tmpl"
   cd "${srcdir}/${_srcname}"
-
-  # add upstream patch
-  git apply --whitespace=nowarn ../patch-${pkgver}
-
-  # RCN patch
-  git apply ../patch-${rcnver%.0}-${rcnrel}.diff
-
-  # ALARM patches
-  git apply ../0001-ARM-atags-add-support-for-Marvell-s-u-boot.patch
-  git apply ../0002-ARM-atags-fdt-retrieve-MAC-addresses-from-Marvell-bo.patch
-  git apply ../0003-SMILE-Plug-device-tree-file.patch
-  git apply ../0004-fix-mvsdio-eMMC-timing.patch
-  git apply ../0005-net-smsc95xx-Allow-mac-address-to-be-set-as-a-parame.patch
-  git apply ../0006-set-default-cubietruck-led-triggers.patch
-  git apply ../0007-exynos4412-odroid-set-higher-minimum-buck2-regulator.patch
-  git apply ../0008-ARM-dove-enable-ethernet-on-D3Plug.patch
-  git apply ../0009-USB-Armory-MkII-support.patch
-
-  cat "${srcdir}/config" > ./.config
-
-  # add pkgrel to extraversion
-  sed -ri "s|^(EXTRAVERSION =)(.*)|\1 \2-${pkgrel}|" Makefile
-
+  chmod +x sfslib
+  
+  temp_var=$(./sfslib localcpu)
+  
+  patch -p1 -i localcpu.patch
+  
+  yes '' | make localmodconfig
+  
+  echo '
+  force integrate template to generated kernel config
+  '
+  ./sfslib fti
+  if $(echo $temp_var | grep -q "select '"); then
+    cpu_archite=$(echo $temp_var | sed "s/.*select '//g" | sed "s/'.*//g")
+    echo "CONFIG_M${cpu_archite^^}=y">>.config
+  else
+    #echo "CONFIG_MNATIVE=y">>.config
+    echo "CONFIG_GENERIC_CPU=y">>.config
+  fi
+  
+  # set extraversion to pkgrel
+  sed -ri "s|^(EXTRAVERSION =).*|\1 -${pkgrel}|" Makefile
   # don't run depmod on 'make install'. We'll do this ourselves in packaging
   sed -i '2iexit 0' scripts/depmod.sh
+  make menuconfig # CLI menu for configuration
+  # rewrite configuration
+  yes "" | make config >/dev/null
 }
 
 build() {
   cd "${srcdir}/${_srcname}"
-  make prepare
-  make menuconfig
-  ff="-O2 -pipe -fno-plt -mfloat-abi=hard -mfpu=neon-vfpv4 -pipe -fstack-protector-strong -march=armv7-a+mp+neon --param l1-cache-size=64 --param l2-cache-size=1024 -fno-strict-aliasing -faggressive-loop-optimizations -fcombine-stack-adjustments -fcprop-registers -fcrossjumping -fdce -fdelayed-branch -fdelete-dead-exceptions -fdelete-null-pointer-checks -fdse -fforward-propagate -fgcse -fgcse-after-reload -fguess-branch-probability -fif-conversion2 -fipa-sra -fira-hoist-pressure -fira-loop-pressure -fira-share-save-slots -fivopts -fjump-tables -floop-interchange -floop-nest-optimize -floop-unroll-and-jam -fmove-loop-invariants -fomit-frame-pointer -foptimize-sibling-calls -foptimize-strlen -fpeel-loops -fpeephole -fpeephole2 -fpredictive-commoning -fprefetch-loop-arrays -freg-struct-return -frename-registers -frerun-cse-after-loop -fschedule-fusion -fsel-sched-pipelining -fsel-sched-pipelining-outer-loops -fshrink-wrap-separate -fsimd-cost-model=dynamic -fsplit-ivs-in-unroller -fsplit-loops -fsplit-paths -fssa-backprop -fssa-phiopt -fstdarg-opt -fthread-jumps -ftree-bit-ccp -ftree-builtin-call-dce -ftree-ccp -ftree-cselim -ftree-dce -ftree-dominator-opts -ftree-dse -ftree-forwprop -ftree-loop-distribution -ftree-loop-optimize -ftree-loop-vectorize -ftree-pre -ftree-slp-vectorize -ftree-vectorize -funroll-loops -fvect-cost-model=dynamic "
-#  CFLAGS+="$ff" 
-#  CXXFLAGS+="$ff"
-  export CFLAGS+="$ff" 
-  export CXXFLAGS+="$ff"
-  
-  echo force custom flags
-  for tmpcycle in $(find -name Makefile); do
-    sed -i "s/armv7-a/armv7-a+mp+neon-vfpv4/g" $tmpcycle
-    sed -i "s/vfvp /vfpv4 /g" $tmpcycle
-    sed -i "s/vfvp,/vfpv4,/g" $tmpcycle
-    sed -i "s/-O2 /-O2 -march=armv7-a+mp+neon-vfpv4 --param l1-cache-size=64 --param l2-cache-size=1024 -faggressive-loop-optimizations -fguess-branch-probability -floop-nest-optimize -fomit-frame-pointer -fsel-sched-pipelining -fsel-sched-pipelining-outer-loops -fpredictive-commoning -fprefetch-loop-arrays -fsimd-cost-model=dynamic -fvect-cost-model=dynamic -ftree-loop-optimize -funroll-loops -floop-unroll-and-jam /g" $tmpcycle
-  done
-  
-  make ${MAKEFLAGS} zImage modules dtbs
+  export CXXFLAGS+=$(cat cxxflags.txt)
+  threads=$(($(grep 'model name' /proc/cpuinfo --count)+1))
+  make -j$threads ${MAKEFLAGS} LOCALVERSION= bzImage modules
 }
 
-package() {
-  pkgdesc="The Linux Kernel, flash image, modules and headers for samsung/google snow XE303C12 chromebook - ${_desc}"
+_package() {
+  pkgdesc="The ${pkgbase/linux/Linux} kernel and modules"
+  [ "${pkgbase}" = "linux" ] && groups=('base')
   depends=('coreutils' 'linux-firmware' 'kmod' 'mkinitcpio>=0.7')
   optdepends=('crda: to set the correct wireless channels of your country')
   backup=("etc/mkinitcpio.d/${pkgbase}.preset")
-  provides=("linux=${pkgver}" "WIREGUARD-MODULE" "linux-headers=${pkgver}" )
-  conflicts=('linux' 'linux-headers' )
-  replaces=('linux-armv7' 'linux-armv7-chromebook' 'linux-armv7-rc-chromebook'  'linux-armv7-rc' 'linux-mvebu' 'linux-udoo' 'linux-sun4i' 'linux-sun5i' 'linux-sun7i' 'linux-usbarmory' 'linux-wandboard' 'linux-clearfog' 'linux-mvebu-headers' 'linux-sun4i-headers' 'linux-sun5i-headers' 'linux-sun7i-headers' 'linux-usbarmory-headers' 'linux-wandboard-headers' 'linux-clearfog-headers' 'linux-armv7-rc-chromebook' 'linux-armv7-chromebook' 'linux-armv7-headers')
-
   cd "${srcdir}/${_srcname}"
-
-  KARCH=arm
-
+  KARCH=x86
   # get kernel version
-  _kernver="$(make kernelrelease)"
+  _kernver="$(make LOCALVERSION= kernelrelease)"
   _basekernel=${_kernver%%-*}
   _basekernel=${_basekernel%.*}
+  mkdir -p "${pkgdir}"/{lib/modules,lib/firmware,boot}
+  make LOCALVERSION= INSTALL_MOD_PATH="${pkgdir}" modules_install
+  cp arch/$KARCH/boot/bzImage "${pkgdir}/boot/vmlinuz-${pkgbase}"
 
-  mkdir -p "${pkgdir}"/{boot,usr/lib/modules}
-  make INSTALL_MOD_PATH="${pkgdir}/usr" modules_install
-  make INSTALL_DTBS_PATH="${pkgdir}/boot/dtbs" dtbs_install
-  cp arch/$KARCH/boot/zImage "${pkgdir}/boot/zImage"
-
-  # make room for external modules
-  local _extramodules="extramodules-${_basekernel}${_kernelname}"
-  ln -s "../${_extramodules}" "${pkgdir}/usr/lib/modules/${_kernver}/extramodules"
-
-  # add real version for building modules and running depmod from hook
-  echo "${_kernver}" |
-    install -Dm644 /dev/stdin "${pkgdir}/usr/lib/modules/${_extramodules}/version"
-
-  # remove build and source links
-  rm "${pkgdir}"/usr/lib/modules/${_kernver}/{source,build}
-
-  # now we call depmod...
-  depmod -b "${pkgdir}/usr" -F System.map "${_kernver}"
-
-
-echo 'flash_kernel() {
-  krnprts=""
-  krnprtc=0
-  for i in $(ls /dev | grep -x --regexp="mmcblk[0-9]" --regexp="sd[a-z]"); do
-    if $(cgpt show /dev/$i | grep Label | grep -q [Kk]ernel); then
-      if $(echo $i | grep -q mmcblk); then
-        krnprts+="$i""p$(cgpt show /dev/$i | grep Label | grep [Kk]ernel -m 1 | sed '"'"'s/  / /g'"'"' | sed '"'"'s/  / /g'"'"' | sed '"'"'s/ La.*//g'"'"' | sed '"'"'s/.* //g'"'"') "
-      else
-        krnprts+="$i$(cgpt show /dev/$i | grep Label | grep [Kk]ernel -m 1 | sed '"'"'s/  / /g'"'"' | sed '"'"'s/  / /g'"'"' | sed '"'"'s/ La.*//g'"'"' | sed '"'"'s/.* //g'"'"') "
-      fi
-      krnprtc=$(($krnprtc+1))
-    fi
-  done
-  
-  echo ""
-  if [ "$krnprtc" -eq 0 ]; then
-    echo "ChromeOs kernel partition did not detected." 
-    echo "You must reflash kernel manually."
-  elif [ "$krnprtc" -eq 1 ]; then
-    echo "Finded ChromeOs kernel partition - $krnprts"
-    echo "Do you want to flash a new kernel to it? (y/n)"
-    read -r shouldwe
-    if [[ $shouldwe =~ ^([yY][eE][sS]|[yY])$ ]]; then
-      dd if=/boot/vmlinux.kpart of=/dev/$krnprts
-      sync
-    else
-      echo "You may flash kernel manually like:"
-      echo "dd if=/boot/vmlinux.kpart of=/dev/$krnprts"
-    fi
-  else
-    echo "Finded more than one ChromeOs kernel partition."
-    echo "You need to select next action
-    "
-    echo "0 for do not flash"
-    numpart=0
-    for i in $krnprts; do
-      numpart=$(($numpart+1))
-      echo "$numpart for flash $i partition"
-    done
-    echo ""
-    echo "Wrong partition may lead to bootfail or disk fail. Be aware!"
-    read -r shouldwe
-    if [ $shouldwe -gt 0 ]&&[ $shouldwe -le $numpart ]; then
-      numpart=0
-      for i in $krnprts; do
-        numpart=$(($numpart+1))
-        if [ $numpart -eq $shouldwe ]; then
-          dd if=/boot/vmlinux.kpart of=/dev/$i
-          sync
-        fi
-      done
-    fi
-  fi
-}
+## gen. req. files
+KERNEL_NAME='${KERNEL_NAME}'
+KERNEL_VERSION='${KERNEL_VERSION}'
+cat<<EOF>"${startdir}/${pkgbase}.pkg"
+KERNEL_NAME=${_kernelname}
+KERNEL_VERSION=${_kernver}
 
 post_install () {
-  flash_kernel
+  # updating module dependencies
+  echo ">>> Updating module dependencies. Just wait ..."
+  depmod ${KERNEL_VERSION}
+  echo ">>> Generating initial ramdisk, using mkinitcpio. Just wait..."
+  mkinitcpio -p linux${KERNEL_NAME}
 }
 
 post_upgrade() {
-  flash_kernel
+  if findmnt --fstab -uno SOURCE /boot &>/dev/null && ! mountpoint -q /boot; then
+    echo "WARNING: /boot appears to be a separate partition but is not mounted."
+  fi
+
+  # updating module dependencies
+  echo ">>> Updating module dependencies. Just wait ..."
+  depmod ${KERNEL_VERSION}
+  echo ">>> Generating initial ramdisk, using mkinitcpio. Just wait..."
+  mkinitcpio -p linux${KERNEL_NAME}
 }
 
 post_remove() {
-  rm -f boot/initramfs-linux.img
+  # also remove the compat symlinks
+  rm -f boot/initramfs-linux${KERNEL_NAME}.img
+  rm -f boot/initramfs-linux${KERNEL_NAME}-fallback.img
 }
-' >../../${pkgbase}.pkg
-  
-true && install=${pkgbase}.pkg   
+EOF
+##
+true && install=${pkgbase}.pkg  
+##
+cat<<EOF>"${srcdir}/${pkgbase}.preset"
+# mkinitcpio preset file for the 'linux' package
 
-# install mkinitcpio preset file...
-echo "# mkinitcpio preset file for the '${pkgbase}' package
+ALL_config="/etc/mkinitcpio.conf"
+ALL_kver="/boot/vmlinuz-linux${_kernelname}"
 
-#ALL_config='/etc/mkinitcpio.conf'
-#ALL_kver='${_kernver}'
+PRESETS=('default' 'fallback')
 
-#PRESETS=('default')
+#default_config="/etc/mkinitcpio.conf"
+default_image="/boot/initramfs-linux${_kernelname}.img"
+#default_options=""
 
-#default_config='/etc/mkinitcpio.conf'
-#default_image='/boot/initramfs-linux.img'
-#default_options=''
-" | install -Dm644 /dev/stdin "${pkgdir}/etc/mkinitcpio.d/${pkgbase}.preset"
-    
-## install pacman hooks
-echo "[Trigger]
+#fallback_config="/etc/mkinitcpio.conf"
+fallback_image="/boot/initramfs-linux${_kernelname}-fallback.img" 
+fallback_options="-S autodetect"
+EOF
+##
+cat<<EOF>"${srcdir}/60-$pkgbase.hook"
+[Trigger]
 Type = File
 Operation = Install
 Operation = Upgrade
 Operation = Remove
-Target = usr/lib/modules/${_kernver}/*
-Target = usr/lib/modules/${_extramodules}/*
+Target = usr/lib/modules/$_kernver/*
+Target = usr/lib/modules/"extramodules-${_basekernel}${_kernelname}"/*
 
 [Action]
-Description = Updating ${pkgbase} module dependencies...
+Description = Updating $pkgbase module dependencies...
 When = PostTransaction
-Exec = /usr/bin/depmod ${_kernver}
-" | install -Dm644 /dev/stdin "${pkgdir}/usr/share/libalpm/hooks/60-${pkgbase}.hook"
+Exec = /usr/bin/depmod $_kernver
+EOF
+##
+cat<<EOF>"${srcdir}/90-$pkgbase.hook"
+[Trigger]
+Type = File
+Operation = Install
+Operation = Upgrade
+Target = usr/lib/modules/$_kernver/vmlinuz
+Target = usr/lib/initcpio/*
 
-## not needed because kernel do not use initrd
-# echo "[Trigger]
-# Type = File
-# Operation = Install
-# Operation = Upgrade
-# Target = boot/zImage
-# Target = usr/lib/initcpio/*
-# 
-# [Action]
-# Description = Updating ${pkgbase} initcpios...
-# When = PostTransaction
-# Exec = /usr/bin/mkinitcpio -p ${pkgbase}
-# " | install -Dm644 /dev/stdin "${pkgdir}/usr/share/libalpm/hooks/90-${pkgbase}.hook"
+[Action]
+Description = Updating $pkgbase initcpios...
+When = PostTransaction
+Exec = /usr/bin/mkinitcpio -p $pkgbase
+EOF
+## end gen. req. files
 
-
-## include headers
-
-
- cd "${srcdir}/${_srcname}"
-  local _builddir="${pkgdir}/usr/lib/modules/${_kernver}/build"
-
-  install -Dt "${_builddir}" -m644 Makefile .config Module.symvers
-  install -Dt "${_builddir}/kernel" -m644 kernel/Makefile
-
-  mkdir "${_builddir}/.tmp_versions"
-
-  cp -t "${_builddir}" -a include scripts
-
-  install -Dt "${_builddir}/arch/${KARCH}" -m644 arch/${KARCH}/Makefile
-  install -Dt "${_builddir}/arch/${KARCH}/kernel" -m644 arch/${KARCH}/kernel/asm-offsets.s arch/$KARCH/kernel/module.lds
-
-  cp -t "${_builddir}/arch/${KARCH}" -a arch/${KARCH}/include
-  for i in dove exynos omap2; do
-    mkdir -p "${_builddir}/arch/${KARCH}/mach-${i}"
-    cp -t "${_builddir}/arch/${KARCH}/mach-${i}" -a arch/$KARCH/mach-${i}/include
-  done
-  for i in omap orion samsung versatile; do
-    mkdir -p "${_builddir}/arch/${KARCH}/plat-${i}"
-    cp -t "${_builddir}/arch/${KARCH}/plat-${i}" -a arch/$KARCH/plat-${i}/include
-  done
-
-  install -Dt "${_builddir}/drivers/md" -m644 drivers/md/*.h
-  install -Dt "${_builddir}/net/mac80211" -m644 net/mac80211/*.h
-
-  # http://bugs.archlinux.org/task/13146
-  install -Dt "${_builddir}/drivers/media/i2c" -m644 drivers/media/i2c/msp3400-driver.h
-
-  # http://bugs.archlinux.org/task/20402
-  install -Dt "${_builddir}/drivers/media/usb/dvb-usb" -m644 drivers/media/usb/dvb-usb/*.h
-  install -Dt "${_builddir}/drivers/media/dvb-frontends" -m644 drivers/media/dvb-frontends/*.h
-  install -Dt "${_builddir}/drivers/media/tuners" -m644 drivers/media/tuners/*.h
-
-  # add xfs and shmem for aufs building
-  mkdir -p "${_builddir}"/{fs/xfs,mm}
-
-  # copy in Kconfig files
-  find . -name Kconfig\* -exec install -Dm644 {} "${_builddir}/{}" \;
-
-  # remove unneeded architectures
-  local _arch
-  for _arch in "${_builddir}"/arch/*/; do
-    [[ ${_arch} == */${KARCH}/ ]] && continue
-    rm -r "${_arch}"
-  done
-
-  # remove files already in linux-docs package
-  rm -r "${_builddir}/Documentation"
-
-  # remove now broken symlinks
-  find -L "${_builddir}" -type l -printf 'Removing %P\n' -delete
-
-  # Fix permissions
-  chmod -R u=rwX,go=rX "${_builddir}"
-
-  # strip scripts directory
-  local _binary _strip
-  while read -rd '' _binary; do
-    case "$(file -bi "${_binary}")" in
-      *application/x-sharedlib*)  _strip="${STRIP_SHARED}"   ;; # Libraries (.so)
-      *application/x-archive*)    _strip="${STRIP_STATIC}"   ;; # Libraries (.a)
-      *application/x-executable*) _strip="${STRIP_BINARIES}" ;; # Binaries
-      *) continue ;;
-    esac
-    /usr/bin/strip ${_strip} "${_binary}"
-  done < <(find "${_builddir}/scripts" -type f -perm -u+w -print0 2>/dev/null)
-
-
-## include kernel flash image
-
-
-cd "${srcdir}/${_srcname}"
-
-  cp ../kernel.its .
-  mkimage -D "-I dts -O dtb -p 2048" -f kernel.its vmlinux.uimg
-  dd if=/dev/zero of=bootloader.bin bs=512 count=1
-  echo 'console=tty0 init=/sbin/init root=PARTUUID=%U/PARTNROFF=1 rootwait rw noinitrd zswap.compressor=zstd zswap.max_pool_percent=40' > cmdline
-  vbutil_kernel \
-    --pack vmlinux.kpart \
-    --version 1 \
-    --vmlinuz vmlinux.uimg \
-    --arch arm \
-    --keyblock ../kernel.keyblock \
-    --signprivate ../kernel_data_key.vbprivk \
-    --config cmdline \
-    --bootloader bootloader.bin
-  cp vmlinux.kpart "${pkgdir}/boot"    
-    
+  install -D -m644 "${srcdir}/${pkgbase}.preset" "${pkgdir}/etc/mkinitcpio.d/${pkgbase}.preset"
+  #install -D -m644 "${srcdir}/60-$pkgbase.hook" "$pkgdir/usr/share/libalpm/hooks/60-$pkgbase.hook"
+  #install -D -m644 "${srcdir}/90-$pkgbase.hook" "$pkgdir/usr/share/libalpm/hooks/90-$pkgbase.hook"
+  # remove build and source links
+  rm -f "${pkgdir}"/lib/modules/${_kernver}/{source,build}
+  # remove the firmware
+  rm -rf "${pkgdir}/lib/firmware"
+  # make room for external modules
+  ln -s "../extramodules-${_basekernel}${_kernelname}" "${pkgdir}/lib/modules/${_kernver}/extramodules"
+  # add real version for building modules and running depmod from post_install/upgrade
+  mkdir -p "${pkgdir}/lib/modules/extramodules-${_basekernel}${_kernelname}"
+  echo "${_kernver}" > "${pkgdir}/lib/modules/extramodules-${_basekernel}${_kernelname}/version"
+  # Now we call depmod...
+  depmod -b "${pkgdir}" -F System.map "${_kernver}"
+  # move module tree /lib -> /usr/lib
+  mkdir -p "${pkgdir}/usr"
+  mv "${pkgdir}/lib" "${pkgdir}/usr/"
+  # add vmlinux
+  install -D -m644 vmlinux "${pkgdir}/usr/lib/modules/${_kernver}/build/vmlinux" 
 }
+
+_package-headers() {
+  pkgdesc="Header files and scripts for building modules for ${pkgbase/linux/Linux} kernel"
+  install -dm755 "${pkgdir}/usr/lib/modules/${_kernver}"
+  cd "${srcdir}/${_srcname}"
+  install -D -m644 Makefile \
+    "${pkgdir}/usr/lib/modules/${_kernver}/build/Makefile"
+  install -D -m644 kernel/Makefile \
+    "${pkgdir}/usr/lib/modules/${_kernver}/build/kernel/Makefile"
+  install -D -m644 .config \
+    "${pkgdir}/usr/lib/modules/${_kernver}/build/.config"
+  mkdir -p "${pkgdir}/usr/lib/modules/${_kernver}/build/include"
+  for i in $(ls include/); do
+    cp -a include/${i} "${pkgdir}/usr/lib/modules/${_kernver}/build/include/"
+  done
+  # copy arch includes for external modules
+  mkdir -p "${pkgdir}/usr/lib/modules/${_kernver}/build/arch/x86"
+  cp -a arch/x86/include "${pkgdir}/usr/lib/modules/${_kernver}/build/arch/x86/"
+  # copy files necessary for later builds, like nvidia and vmware
+  cp Module.symvers "${pkgdir}/usr/lib/modules/${_kernver}/build"
+  cp -a scripts "${pkgdir}/usr/lib/modules/${_kernver}/build"
+  # fix permissions on scripts dir
+  chmod og-w -R "${pkgdir}/usr/lib/modules/${_kernver}/build/scripts"
+  mkdir -p "${pkgdir}/usr/lib/modules/${_kernver}/build/.tmp_versions"
+  mkdir -p "${pkgdir}/usr/lib/modules/${_kernver}/build/arch/${KARCH}/kernel"
+  cp arch/${KARCH}/Makefile "${pkgdir}/usr/lib/modules/${_kernver}/build/arch/${KARCH}/"
+  cp arch/${KARCH}/kernel/asm-offsets.s "${pkgdir}/usr/lib/modules/${_kernver}/build/arch/${KARCH}/kernel/"
+  # add dm headers
+  mkdir -p "${pkgdir}/usr/lib/modules/${_kernver}/build/drivers/md"
+  cp drivers/md/*.h "${pkgdir}/usr/lib/modules/${_kernver}/build/drivers/md"
+  # add inotify.h
+  mkdir -p "${pkgdir}/usr/lib/modules/${_kernver}/build/include/linux"
+  cp include/linux/inotify.h "${pkgdir}/usr/lib/modules/${_kernver}/build/include/linux/"
+  # add wireless headers
+  mkdir -p "${pkgdir}/usr/lib/modules/${_kernver}/build/net/mac80211/"
+  cp net/mac80211/*.h "${pkgdir}/usr/lib/modules/${_kernver}/build/net/mac80211/"
+  # add xfs and shmem for aufs building
+  mkdir -p "${pkgdir}/usr/lib/modules/${_kernver}/build/fs/xfs"
+  mkdir -p "${pkgdir}/usr/lib/modules/${_kernver}/build/mm"
+  # copy in Kconfig files
+  for i in $(find . -name "Kconfig*"); do
+    mkdir -p "${pkgdir}"/usr/lib/modules/${_kernver}/build/`echo ${i} | sed 's|/Kconfig.*||'`
+    cp ${i} "${pkgdir}/usr/lib/modules/${_kernver}/build/${i}"
+  done
+  # add objtool for external module building and enabled VALIDATION_STACK option
+  if [ -f tools/objtool/objtool ];  then
+      mkdir -p "${pkgdir}/usr/lib/modules/${_kernver}/build/tools/objtool"
+      cp -a tools/objtool/objtool ${pkgdir}/usr/lib/modules/${_kernver}/build/tools/objtool/ 
+  fi
+  chown -R root.root "${pkgdir}/usr/lib/modules/${_kernver}/build"
+  find "${pkgdir}/usr/lib/modules/${_kernver}/build" -type d -exec chmod 755 {} \;
+  # strip scripts directory
+  find "${pkgdir}/usr/lib/modules/${_kernver}/build/scripts" -type f -perm -u+w 2>/dev/null | while read binary ; do
+    case "$(file -bi "${binary}")" in
+      *application/x-sharedlib*) # Libraries (.so)
+        /usr/bin/strip ${STRIP_SHARED} "${binary}";;
+      *application/x-archive*) # Libraries (.a)
+        /usr/bin/strip ${STRIP_STATIC} "${binary}";;
+      *application/x-executable*) # Binaries
+        /usr/bin/strip ${STRIP_BINARIES} "${binary}";;
+    esac
+  done
+  # remove unneeded architectures
+  rm -rf "${pkgdir}"/usr/lib/modules/${_kernver}/build/arch/{alpha,arc,arm,arm26,arm64,avr32,blackfin,c6x,cris,frv,h8300,hexagon,ia64,m32r,m68k,m68knommu,metag,mips,microblaze,mn10300,openrisc,parisc,powerpc,ppc,s390,score,sh,sh64,sparc,sparc64,tile,unicore32,um,v850,xtensa}
+  # remove a files already in linux-docs package
+  rm -f "${pkgdir}/usr/lib/modules/${_kernver}/build/Documentation/kbuild/Kconfig.recursion-issue-01"
+  rm -f "${pkgdir}/usr/lib/modules/${_kernver}/build/Documentation/kbuild/Kconfig.recursion-issue-02"
+  rm -f "${pkgdir}/usr/lib/modules/${_kernver}/build/Documentation/kbuild/Kconfig.select-break"
+}
+
+pkgname=("${pkgbase}" "${pkgbase}-headers")
+for _p in ${pkgname[@]}; do
+  eval "package_${_p}() {
+    $(declare -f "_package${_p#${pkgbase}}")
+    _package${_p#${pkgbase}}
+  }"
+done
