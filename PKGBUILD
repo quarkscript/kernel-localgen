@@ -1,8 +1,8 @@
 ## some experiments
 pkgbase=linux-custom 
-pkgver=5.8.8
+pkgver=5.8.16
 _srcname=linux-${pkgver}
-pkgrel=1
+pkgrel=2
 arch=('x86_64')
 url="http://www.kernel.org/"
 license=('GPL2')
@@ -22,6 +22,8 @@ validpgpkeys=(
              )
 _kernelname=${pkgbase#linux}
 
+MAKEFLAGS+=" -j$(($(grep 'model name' /proc/cpuinfo --count)+1))"
+
 prepare() {
   # try CPU-optimization patch
   cp sfslib "${srcdir}/${_srcname}/sfslib"
@@ -35,7 +37,7 @@ prepare() {
   
   patch -p1 -i localcpu.patch
   
-  yes '' | make localmodconfig
+  yes '' | make ${MAKEFLAGS} localmodconfig
   
   echo '
   force integrate template to generated kernel config
@@ -49,11 +51,25 @@ prepare() {
     echo "CONFIG_GENERIC_CPU=y">>.config
   fi
   
+  echo "
+  additional force custom flags
+  "  
+  l1cs=$(cat cxxflags.txt | sed 's/.*l1-cache-size=//g' | sed 's/ .*//g')
+  l2cs=$(cat cxxflags.txt | sed 's/.*l1-cache-size=//g' | sed 's/ .*//g')
+  if [ "$l1cs" -gt 8 ]&&[ "$l2cs" -gt 32 ]; then
+    cachesparams="--param l1-cache-size=$l1cs --param l2-cache-size=$l2cs"
+  else
+    cachesparams=""
+  fi
+  for tmpcycle in $(find -name Makefile); do
+    sed -i "s/-O2/-O2 $cachesparams -faggressive-loop-optimizations -fguess-branch-probability -floop-nest-optimize -fomit-frame-pointer -fsel-sched-pipelining -fsel-sched-pipelining-outer-loops -fpredictive-commoning -fprefetch-loop-arrays -ftree-loop-optimize /g" $tmpcycle
+  done
+  
   # set extraversion to pkgrel
   sed -ri "s|^(EXTRAVERSION =).*|\1 -${pkgrel}|" Makefile
   # don't run depmod on 'make install'. We'll do this ourselves in packaging
   sed -i '2iexit 0' scripts/depmod.sh
-  make menuconfig # CLI menu for configuration
+  make ${MAKEFLAGS} menuconfig # CLI menu for configuration
   # rewrite configuration
   yes "" | make config >/dev/null
 }
@@ -61,8 +77,7 @@ prepare() {
 build() {
   cd "${srcdir}/${_srcname}"
   export CXXFLAGS+=$(cat cxxflags.txt)
-  threads=$(($(grep 'model name' /proc/cpuinfo --count)+1))
-  make -j$threads ${MAKEFLAGS} LOCALVERSION= bzImage modules
+  make ${MAKEFLAGS} LOCALVERSION= bzImage modules
 }
 
 _package() {
@@ -78,7 +93,7 @@ _package() {
   _basekernel=${_kernver%%-*}
   _basekernel=${_basekernel%.*}
   mkdir -p "${pkgdir}"/{lib/modules,lib/firmware,boot}
-  make LOCALVERSION= INSTALL_MOD_PATH="${pkgdir}" modules_install
+  make ${MAKEFLAGS} LOCALVERSION= INSTALL_MOD_PATH="${pkgdir}" modules_install
   cp arch/$KARCH/boot/bzImage "${pkgdir}/boot/vmlinuz-${pkgbase}"
 
 ## gen. req. files
