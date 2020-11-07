@@ -1,8 +1,8 @@
 ## some experiments
 pkgbase=linux-custom 
-pkgver=5.8.16
+pkgver=5.9.6
 _srcname=linux-${pkgver}
-pkgrel=2
+pkgrel=3
 arch=('x86_64')
 url="http://www.kernel.org/"
 license=('GPL2')
@@ -12,7 +12,8 @@ source=("https://www.kernel.org/pub/linux/kernel/v5.x/${_srcname}.tar.xz"
 #        "https://www.kernel.org/pub/linux/kernel/v5.x/${_srcname}.tar.sign"
         'https://raw.githubusercontent.com/quarkscript/custom-linux-kernel/master/conf_tmpl'
 #        'https://raw.githubusercontent.com/quarkscript/custom-linux-kernel/master/cpu.patch'
-        'https://raw.githubusercontent.com/quarkscript/custom-linux-kernel/master/cpu_5.8.1.patch'
+#        'https://raw.githubusercontent.com/quarkscript/custom-linux-kernel/master/cpu_5.8.1.patch'
+        'https://raw.githubusercontent.com/quarkscript/custom-linux-kernel/master/cpu_5.9.6.patch'
         'https://raw.githubusercontent.com/quarkscript/Simple_func_scripts/master/sfslib'
         )
 sha512sums=('SKIP' 'SKIP' 'SKIP' 'SKIP')
@@ -28,7 +29,8 @@ prepare() {
   # try CPU-optimization patch
   cp sfslib "${srcdir}/${_srcname}/sfslib"
   #cp cpu.patch "${srcdir}/${_srcname}/cpu.patch"
-  cp cpu_5.8.1.patch "${srcdir}/${_srcname}/cpu.patch"
+  #cp cpu_5.8.1.patch "${srcdir}/${_srcname}/cpu.patch"
+  cp cpu_5.9.6.patch "${srcdir}/${_srcname}/cpu.patch"
   cp conf_tmpl "${srcdir}/${_srcname}/conf_tmpl"
   cd "${srcdir}/${_srcname}"
   chmod +x sfslib
@@ -62,7 +64,7 @@ prepare() {
     cachesparams=""
   fi
   for tmpcycle in $(find -name Makefile); do
-    sed -i "s/-O2/-O2 $cachesparams -faggressive-loop-optimizations -fguess-branch-probability -floop-nest-optimize -fomit-frame-pointer -fsel-sched-pipelining -fsel-sched-pipelining-outer-loops -fpredictive-commoning -fprefetch-loop-arrays -ftree-loop-optimize /g" $tmpcycle
+    sed -i "s/-O2/-O2 $cachesparams -faggressive-loop-optimizations -fguess-branch-probability -floop-interchange -floop-nest-optimize -floop-unroll-and-jam -fmove-loop-invariants -fomit-frame-pointer -foptimize-sibling-calls -fsplit-ivs-in-unroller -fsplit-loops -fsel-sched-pipelining -fsel-sched-pipelining-outer-loops -fpredictive-commoning -fprefetch-loop-arrays -ftree-loop-optimize -ftree-loop-distribution /g" $tmpcycle
   done
   
   # set extraversion to pkgrel
