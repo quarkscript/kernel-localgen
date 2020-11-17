@@ -1,8 +1,8 @@
 ## some experiments
 pkgbase=linux-custom 
-pkgver=5.9.6
+pkgver=5.9.8
 _srcname=linux-${pkgver}
-pkgrel=3
+pkgrel=1
 arch=('x86_64')
 url="http://www.kernel.org/"
 license=('GPL2')
@@ -11,6 +11,7 @@ options=('!strip')
 source=("https://www.kernel.org/pub/linux/kernel/v5.x/${_srcname}.tar.xz"
 #        "https://www.kernel.org/pub/linux/kernel/v5.x/${_srcname}.tar.sign"
         'https://raw.githubusercontent.com/quarkscript/custom-linux-kernel/master/conf_tmpl'
+#        'conf_tmpl'
 #        'https://raw.githubusercontent.com/quarkscript/custom-linux-kernel/master/cpu.patch'
 #        'https://raw.githubusercontent.com/quarkscript/custom-linux-kernel/master/cpu_5.8.1.patch'
         'https://raw.githubusercontent.com/quarkscript/custom-linux-kernel/master/cpu_5.9.6.patch'
@@ -24,6 +25,7 @@ validpgpkeys=(
 _kernelname=${pkgbase#linux}
 
 MAKEFLAGS+=" -j$(($(grep 'model name' /proc/cpuinfo --count)+1))"
+pkgname="${pkgbase}"
 
 prepare() {
   # try CPU-optimization patch
@@ -65,6 +67,7 @@ prepare() {
   fi
   for tmpcycle in $(find -name Makefile); do
     sed -i "s/-O2/-O2 $cachesparams -faggressive-loop-optimizations -fguess-branch-probability -floop-interchange -floop-nest-optimize -floop-unroll-and-jam -fmove-loop-invariants -fomit-frame-pointer -foptimize-sibling-calls -fsplit-ivs-in-unroller -fsplit-loops -fsel-sched-pipelining -fsel-sched-pipelining-outer-loops -fpredictive-commoning -fprefetch-loop-arrays -ftree-loop-optimize -ftree-loop-distribution /g" $tmpcycle
+#     sed -i "s/-O2/-O2 $cachesparams -faggressive-loop-optimizations -fguess-branch-probability -floop-nest-optimize -fomit-frame-pointer -fsel-sched-pipelining -fsel-sched-pipelining-outer-loops -fpredictive-commoning -fprefetch-loop-arrays -ftree-loop-optimize /g" $tmpcycle
   done
   
   # set extraversion to pkgrel
@@ -78,15 +81,17 @@ prepare() {
 
 build() {
   cd "${srcdir}/${_srcname}"
-  export CXXFLAGS+=$(cat cxxflags.txt)
+  #export CXXFLAGS+=$(cat cxxflags.txt)
   make ${MAKEFLAGS} LOCALVERSION= bzImage modules
 }
 
-_package() {
-  pkgdesc="The ${pkgbase/linux/Linux} kernel and modules"
+# _package() {
+package() {
+  pkgdesc="The ${pkgbase/linux/Linux} kernel and modules and headers"
   [ "${pkgbase}" = "linux" ] && groups=('base')
-  depends=('coreutils' 'linux-firmware' 'kmod' 'mkinitcpio>=0.7')
-  optdepends=('crda: to set the correct wireless channels of your country')
+  depends=('coreutils' 'kmod' 'mkinitcpio>=0.7')
+  optdepends=('linux-firmware: may be required for specific hw'
+  'crda: to set the correct wireless channels of your country')
   backup=("etc/mkinitcpio.d/${pkgbase}.preset")
   cd "${srcdir}/${_srcname}"
   KARCH=x86
@@ -200,10 +205,10 @@ EOF
   mv "${pkgdir}/lib" "${pkgdir}/usr/"
   # add vmlinux
   install -D -m644 vmlinux "${pkgdir}/usr/lib/modules/${_kernver}/build/vmlinux" 
-}
-
-_package-headers() {
-  pkgdesc="Header files and scripts for building modules for ${pkgbase/linux/Linux} kernel"
+# }
+# 
+# _package-headers() {
+  pkgdesc+=" + Header files and scripts for building modules for ${pkgbase/linux/Linux} kernel"
   install -dm755 "${pkgdir}/usr/lib/modules/${_kernver}"
   cd "${srcdir}/${_srcname}"
   install -D -m644 Makefile \
@@ -271,10 +276,10 @@ _package-headers() {
   rm -f "${pkgdir}/usr/lib/modules/${_kernver}/build/Documentation/kbuild/Kconfig.select-break"
 }
 
-pkgname=("${pkgbase}" "${pkgbase}-headers")
-for _p in ${pkgname[@]}; do
-  eval "package_${_p}() {
-    $(declare -f "_package${_p#${pkgbase}}")
-    _package${_p#${pkgbase}}
-  }"
-done
+# pkgname=("${pkgbase}" "${pkgbase}-headers")
+# for _p in ${pkgname[@]}; do
+#   eval "package_${_p}() {
+#     $(declare -f "_package${_p#${pkgbase}}")
+#     _package${_p#${pkgbase}}
+#   }"
+# done
