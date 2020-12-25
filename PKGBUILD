@@ -1,8 +1,8 @@
 ## some experiments
 pkgbase=linux-custom 
-pkgver=5.9.8
+pkgver=5.9.16
 _srcname=linux-${pkgver}
-pkgrel=1
+pkgrel=2
 arch=('x86_64')
 url="http://www.kernel.org/"
 license=('GPL2')
