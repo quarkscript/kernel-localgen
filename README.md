@@ -8,3 +8,5 @@ My expectation of how this should work:
 - a menu for manual configuration of the kernel will be executed and after exiting from it, the build process will be launched.
 
 > based on default Arch Linux Kernel build script
+
+> builded kernel will be tuned to local hardware and may not run on other hardware
