@@ -1,9 +1,10 @@
-Build a custom arch linux kernel for my old pc.
+# Linux kernel build script for Arch Linux based system.
 
-I don't actually know is it run faster or slower than a generic kernel, is it cause of optimizations or config, I hope it is faster.
+My expectation of how this should work:
+- after applying the kernel patch, some optimizations of modern processors will be available;
+- after forcibly setting the gcc optimization flags, all makefiles will be modified to use them;
+- after executing `make localmodconfig` a local hardware-specific .config file will be created;
+- after applying the template, some required drivers will be added from the template, and gcc will be forced to use the local processor optimization if it is recognized;
+- a menu for manual configuration of the kernel will be executed and after exiting from it, the build process will be launched.
 
-Kernel config will be created automatically for local hw and some drivers will be forced on from template.
-
-Next picture a little bit outdated. Linux kernels builded from recent versions (with and without forced gcc optimizations flags) has a smaller difference in performance.
-
-![fig. 1](https://github.com/quarkscript/old-pc-linux-kernel/blob/master/krncomp.png)
+> based on default Arch Linux Kernel build script
