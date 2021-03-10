@@ -1,20 +1,36 @@
-## some experiments
-pkgbase=linux-custom 
-pkgver=5.10.13
+## Linux kernel build script for Arch Linux based system.
+##
+## My expectation of how this should work:
+## - after applying the kernel patch, some optimizations of modern processors 
+##   will be available;
+## - after forcibly setting the gcc optimization flags, all makefiles will be
+##   modified to use them;
+## - after executing make localmodconfig a local hardware-specific .config file
+##   will be created;
+## - after applying the template, some required drivers will be added 
+##   and gcc will be forced to use the local processor optimization 
+##   if it is recognized;
+## - a menu for manual configuration of the kernel will be executed and after 
+##   exiting from it, the build process will be launched.
+##
+## based on default Arch Linux Kernel build script
+
+pkgbase=linux-localgen
+pkgver=5.11.5
 _srcname=linux-${pkgver}
 pkgrel=1
 arch=('x86_64')
 url="http://www.kernel.org/"
 license=('GPL2')
-makedepends=('xmlto' 'docbook-xsl' 'kmod' 'inetutils' 'bc' 'libelf' 'pahole')
+makedepends=('xmlto' 'docbook-xsl' 'kmod' 'inetutils' 'bc' 'git' 'flex' 'make' 'gcc' 'fakeroot' 'bison' 'libelf' 'pahole')
 options=('!strip')
 source=("https://www.kernel.org/pub/linux/kernel/v5.x/${_srcname}.tar.xz"
 #        "https://www.kernel.org/pub/linux/kernel/v5.x/${_srcname}.tar.sign"
-        'https://raw.githubusercontent.com/quarkscript/custom-linux-kernel/master/conf_tmpl'
+        'https://raw.githubusercontent.com/quarkscript/kernel-localgen/master/conf_tmpl'
 #        'conf_tmpl'
-#        'https://raw.githubusercontent.com/quarkscript/custom-linux-kernel/master/cpu.patch'
-#        'https://raw.githubusercontent.com/quarkscript/custom-linux-kernel/master/cpu_5.8.1.patch'
-        'https://raw.githubusercontent.com/quarkscript/custom-linux-kernel/master/cpu_5.9.6.patch'
+#        'https://raw.githubusercontent.com/quarkscript/kernel-localgen/master/cpu.patch'
+#        'https://raw.githubusercontent.com/quarkscript/kernel-localgen/master/cpu_5.8.1.patch'
+        'https://raw.githubusercontent.com/quarkscript/kernel-localgen/master/cpu_5.9.6.patch'
         'https://raw.githubusercontent.com/quarkscript/Simple_func_scripts/master/sfslib'
         )
 sha512sums=('SKIP' 'SKIP' 'SKIP' 'SKIP')
@@ -44,7 +60,7 @@ prepare() {
   yes '' | make ${MAKEFLAGS} localmodconfig
   
   echo '
-  force integrate template to generated kernel config
+  integrating settings from template to generated kernel config
   '
   ./sfslib fti
   if $(echo $temp_var | grep -q "select '"); then
@@ -56,7 +72,7 @@ prepare() {
   fi
   
   echo "
-  additional force custom flags
+  additional forcing custom flags
   "  
   l1cs=$(cat cxxflags.txt | sed 's/.*l1-cache-size=//g' | sed 's/ .*//g')
   l2cs=$(cat cxxflags.txt | sed 's/.*l1-cache-size=//g' | sed 's/ .*//g')
