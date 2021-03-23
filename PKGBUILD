@@ -16,7 +16,7 @@
 ## based on default Arch Linux Kernel build script
 
 pkgbase=linux-localgen
-pkgver=5.11.5
+pkgver=5.11.8
 _srcname=linux-${pkgver}
 pkgrel=1
 arch=('x86_64')
@@ -59,9 +59,8 @@ prepare() {
   
   yes '' | make ${MAKEFLAGS} localmodconfig
   
-  echo '
-  integrating settings from template to generated kernel config
-  '
+  echo "# integrating settings from template to generated kernel config
+#  "
   ./sfslib fti
   if $(echo $temp_var | grep -q "select '"); then
     cpu_archite=$(echo $temp_var | sed "s/.*select '//g" | sed "s/'.*//g")
@@ -71,9 +70,8 @@ prepare() {
     echo "CONFIG_GENERIC_CPU=y">>.config
   fi
   
-  echo "
-  additional forcing custom flags
-  "  
+  echo "# additional forcing custom flags
+#  "  
   l1cs=$(cat cxxflags.txt | sed 's/.*l1-cache-size=//g' | sed 's/ .*//g')
   l2cs=$(cat cxxflags.txt | sed 's/.*l1-cache-size=//g' | sed 's/ .*//g')
   if [ "$l1cs" -gt 8 ]&&[ "$l2cs" -gt 32 ]; then
@@ -84,7 +82,6 @@ prepare() {
   for tmpcycle in $(find -name Makefile); do
     sed -i "s/-Os/-O2/g" $tmpcycle
     sed -i "s/-O2/-O2 $cachesparams -faggressive-loop-optimizations -fguess-branch-probability -floop-interchange -floop-nest-optimize -floop-unroll-and-jam -fmove-loop-invariants -fomit-frame-pointer -foptimize-sibling-calls -fsplit-ivs-in-unroller -fsplit-loops -fsel-sched-pipelining -fsel-sched-pipelining-outer-loops -fpredictive-commoning -fprefetch-loop-arrays -ftree-loop-optimize -ftree-loop-distribution /g" $tmpcycle
-#     sed -i "s/-O2/-O2 $cachesparams -faggressive-loop-optimizations -fguess-branch-probability -floop-nest-optimize -fomit-frame-pointer -fsel-sched-pipelining -fsel-sched-pipelining-outer-loops -fpredictive-commoning -fprefetch-loop-arrays -ftree-loop-optimize /g" $tmpcycle
   done
   
   # set extraversion to pkgrel
@@ -114,6 +111,7 @@ package() {
   KARCH=x86
   # get kernel version
   _kernver="$(make LOCALVERSION= kernelrelease)"
+  #_kernver="$pkgver-$pkgrel-${pkgbase#linux-}"
   _basekernel=${_kernver%%-*}
   _basekernel=${_basekernel%.*}
   mkdir -p "${pkgdir}"/{lib/modules,lib/firmware,boot}
