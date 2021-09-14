@@ -16,7 +16,7 @@
 ## based on default Arch Linux Kernel build script
 
 pkgbase=linux-localgen
-pkgver=5.13.6
+pkgver=5.14.3
 _srcname=linux-${pkgver}
 pkgrel=1
 arch=('x86_64')
@@ -81,7 +81,11 @@ prepare() {
   fi
   for tmpcycle in $(find -name Makefile); do
     sed -i "s/-Os/-O2/g" $tmpcycle
-    sed -i "s/-O2/-O2 $cachesparams -faggressive-loop-optimizations -fguess-branch-probability -floop-interchange -floop-nest-optimize -floop-unroll-and-jam -fmove-loop-invariants -fomit-frame-pointer -foptimize-sibling-calls -fsplit-ivs-in-unroller -fsplit-loops -fsel-sched-pipelining -fsel-sched-pipelining-outer-loops -fpredictive-commoning -fprefetch-loop-arrays -ftree-loop-optimize -ftree-loop-distribution /g" $tmpcycle
+    if $(echo $tmpcycle | grep -vq 'arch/x86/boot/'); then
+        sed -i "s/-O2/-O2 $cachesparams -faggressive-loop-optimizations -fguess-branch-probability -floop-interchange -floop-nest-optimize -floop-unroll-and-jam -fmove-loop-invariants -fomit-frame-pointer -foptimize-sibling-calls -fsplit-ivs-in-unroller -fsplit-loops -fsel-sched-pipelining -fsel-sched-pipelining-outer-loops -fpredictive-commoning -fprefetch-loop-arrays -ftree-loop-optimize -ftree-loop-distribution /g" $tmpcycle
+    else
+        sed -i "s/-O2/-O2 $cachesparams -faggressive-loop-optimizations -fguess-branch-probability -floop-interchange -floop-nest-optimize -floop-unroll-and-jam -fmove-loop-invariants -fomit-frame-pointer -foptimize-sibling-calls -fsplit-ivs-in-unroller -fsplit-loops -fsel-sched-pipelining -fsel-sched-pipelining-outer-loops -fpredictive-commoning -ftree-loop-optimize -ftree-loop-distribution /g" $tmpcycle
+    fi
   done
   
   # set extraversion to pkgrel
