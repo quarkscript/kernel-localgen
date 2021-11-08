@@ -16,7 +16,7 @@
 ## based on default Arch Linux Kernel build script
 
 pkgbase=linux-localgen
-pkgver=5.14.3
+pkgver=5.15.1
 _srcname=linux-${pkgver}
 pkgrel=1
 arch=('x86_64')
@@ -30,7 +30,8 @@ source=("https://www.kernel.org/pub/linux/kernel/v5.x/${_srcname}.tar.xz"
 #        'conf_tmpl'
 #        'https://raw.githubusercontent.com/quarkscript/kernel-localgen/master/cpu.patch'
 #        'https://raw.githubusercontent.com/quarkscript/kernel-localgen/master/cpu_5.8.1.patch'
-        'https://raw.githubusercontent.com/quarkscript/kernel-localgen/master/cpu_5.13.6.patch'
+#        'https://raw.githubusercontent.com/quarkscript/kernel-localgen/master/cpu_5.13.6.patch'
+         'https://raw.githubusercontent.com/quarkscript/kernel-localgen/master/cpu_5.15.1.patch'
         'https://raw.githubusercontent.com/quarkscript/Simple_func_scripts/master/sfslib'
         )
 sha512sums=('SKIP' 'SKIP' 'SKIP' 'SKIP')
@@ -48,7 +49,7 @@ prepare() {
   cp sfslib "${srcdir}/${_srcname}/sfslib"
   #cp cpu.patch "${srcdir}/${_srcname}/cpu.patch"
   #cp cpu_5.8.1.patch "${srcdir}/${_srcname}/cpu.patch"
-  cp cpu_5.13.6.patch "${srcdir}/${_srcname}/cpu.patch"
+  cp cpu_5.15.1.patch "${srcdir}/${_srcname}/cpu.patch"
   cp conf_tmpl "${srcdir}/${_srcname}/conf_tmpl"
   cd "${srcdir}/${_srcname}"
   chmod +x sfslib
@@ -82,9 +83,9 @@ prepare() {
   for tmpcycle in $(find -name Makefile); do
     sed -i "s/-Os/-O2/g" $tmpcycle
     if $(echo $tmpcycle | grep -vq 'arch/x86/boot/'); then
-        sed -i "s/-O2/-O2 $cachesparams -faggressive-loop-optimizations -fguess-branch-probability -floop-interchange -floop-nest-optimize -floop-unroll-and-jam -fmove-loop-invariants -fomit-frame-pointer -foptimize-sibling-calls -fsplit-ivs-in-unroller -fsplit-loops -fsel-sched-pipelining -fsel-sched-pipelining-outer-loops -fpredictive-commoning -fprefetch-loop-arrays -ftree-loop-optimize -ftree-loop-distribution /g" $tmpcycle
+        sed -i "s/-O2/-O2 $cachesparams -faggressive-loop-optimizations -fguess-branch-probability -floop-interchange -floop-nest-optimize -floop-unroll-and-jam -fmove-loop-invariants -fomit-frame-pointer -foptimize-sibling-calls -fsplit-ivs-in-unroller -fsplit-loops -fsel-sched-pipelining -fsel-sched-pipelining-outer-loops -fpredictive-commoning -fprefetch-loop-arrays -ftree-loop-optimize -ftree-loop-distribution -floop-interchange -fpeel-loops -funswitch-loops -fvect-cost-model=dynamic -fsimd-cost-model=dynamic -ftree-loop-ivcanon -ftree-loop-im /g" $tmpcycle
     else
-        sed -i "s/-O2/-O2 $cachesparams -faggressive-loop-optimizations -fguess-branch-probability -floop-interchange -floop-nest-optimize -floop-unroll-and-jam -fmove-loop-invariants -fomit-frame-pointer -foptimize-sibling-calls -fsplit-ivs-in-unroller -fsplit-loops -fsel-sched-pipelining -fsel-sched-pipelining-outer-loops -fpredictive-commoning -ftree-loop-optimize -ftree-loop-distribution /g" $tmpcycle
+        sed -i "s/-O2/-O2 $cachesparams -faggressive-loop-optimizations -fguess-branch-probability -floop-interchange -floop-nest-optimize -floop-unroll-and-jam -fmove-loop-invariants -fomit-frame-pointer -foptimize-sibling-calls -fsplit-ivs-in-unroller -fsplit-loops -fsel-sched-pipelining -fsel-sched-pipelining-outer-loops -fpredictive-commoning -ftree-loop-optimize -ftree-loop-distribution -floop-interchange -fpeel-loops -funswitch-loops -fvect-cost-model=dynamic -fsimd-cost-model=dynamic -ftree-loop-ivcanon -ftree-loop-im /g" $tmpcycle
     fi
   done
   
