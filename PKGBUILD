@@ -16,7 +16,7 @@
 ## based on default Arch Linux Kernel build script
 
 pkgbase=linux-localgen
-pkgver=5.15.1
+pkgver=5.16.9
 _srcname=linux-${pkgver}
 pkgrel=1
 arch=('x86_64')
